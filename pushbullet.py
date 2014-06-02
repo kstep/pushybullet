@@ -1,6 +1,7 @@
 # -*- encoding: utf-8 -*-
 from requests import session
 from os.path import basename
+import datetime
 import json
 import time
 
@@ -277,7 +278,12 @@ class PushBullet(object):
         return self.__contacts
 
 
-    def pushes(self, since=None):
+    def pushes(self, since=0):
+        if isinstance(since, datetime.date):
+            since = since.strftime('%s')
+        elif isinstance(since, datetime.timedelta):
+            since = (datetime.datetime.now() - since).strftime('%s')
+
         pushes = self.get('pushes', modified_after=since)
 
         while True:
