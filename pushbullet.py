@@ -64,6 +64,15 @@ class PushBulletObject(object):
     def delete(self):
         self.api.delete(self.uri)
 
+    def bind(self, api):
+        assert(isinstance(api, PushBullet))
+        self.api = api
+        return self
+
+    @property
+    def bound(self):
+        return bool(getattr(self, 'api', None))
+
 # Push targets {{{
 
 class PushTarget(PushBulletObject):
@@ -71,9 +80,9 @@ class PushTarget(PushBulletObject):
     Abstract push target object
     '''
     def __init__(self, api, iden, **data):
-        self.api = api
         self.iden = iden
         self.__dict__.update(data)
+        self.bind(api)
 
     @property
     def ident(self):
@@ -143,7 +152,7 @@ class Push(PushBulletObject):
         data.update(target.ident)
         data['type'] = self.type
         result = target.api.post('pushes', **data)
-        self.api = target.api
+        self.bind(target.api)
         self.__dict__.update(result)
         
     @property
@@ -302,7 +311,7 @@ class PushBullet(object):
                 'mirror': MirrorPush,
                 'dismissal': DismissalPush,
                 }.get(push.get('type'), Push)
-        return pushcls(api=self, **push)
+        return pushcls(**push).bind(self)
 
     def delete(self, _uri):
         '''
@@ -411,6 +420,10 @@ class PushBullet(object):
             push = self.make_push(pushargs)
 
         push.send(target)
+
+    def bind(self, obj):
+        assert(isinstance(obj, PushBulletObject))
+        return obj.bind(self)
 
     def stream(self, skip_nop=True):
         '''
