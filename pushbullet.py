@@ -443,6 +443,7 @@ class PushBullet(object):
             push = self.make_push(pushargs)
 
         push.send(target)
+        return push
 
     def bind(self, obj):
         assert(isinstance(obj, PushBulletObject))
