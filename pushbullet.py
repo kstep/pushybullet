@@ -308,7 +308,8 @@ class PushBullet(object):
         '''
         Helper method for POST requests to API
         '''
-        response = self.sess.post(self.API_URL % _uri, data=data)
+        response = self.sess.post(self.API_URL % _uri, data=json.dumps(data),
+                headers={'content-type': 'application/json'})
         response.raise_for_status()
 
         result = response.json()
