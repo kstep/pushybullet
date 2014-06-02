@@ -247,6 +247,9 @@ class FilePush(Push):
         Push.__init__(self, **data)
 
     def send(self, target):
+        if not isinstance(target, PushTarget):
+            target = Device(self.api, str(target))
+
         fh = self.file_name if isinstance(self.file_name, file) else open(self.file_name, 'rb')
 
         try:
