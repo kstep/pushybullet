@@ -5,7 +5,11 @@ import datetime
 import json
 import time
 
+# Events {{{
 class Event(object):
+    '''
+    Abstract Pushbullet event
+    '''
     __slots__ = ['api', 'time']
     def __init__(self, api):
         self.time = time.time()
@@ -15,9 +19,15 @@ class Event(object):
         return '<%s @%s>' % (self.__class__.__name__, self.time)
 
 class NopEvent(Event):
+    '''
+    Nop event (keep-alive ticks)
+    '''
     pass
 
 class TickleEvent(Event):
+    '''
+    Tickle event (user pushes)
+    '''
     __slots__ = ['api', 'time', 'subtype']
     def __init__(self, api, subtype):
         Event.__init__(self, api)
@@ -30,6 +40,9 @@ class TickleEvent(Event):
         return '<%s[%s] @%s>' % (self.__class__.__name__, self.subtype, self.time)
 
 class PushEvent(Event):
+    '''
+    Push event (device notification mirroring)
+    '''
     __slots__ = ['api', 'time', 'push']
     def __init__(self, api, push):
         Event.__init__(self, api)
@@ -38,6 +51,7 @@ class PushEvent(Event):
     def __repr__(self):
         return '<%s[%r] @%s>' % (self.__class__.__name__, self.push, self.time)
 
+# }}}
 
 class PushBulletError(Exception):
     pass
@@ -50,7 +64,12 @@ class PushBulletObject(object):
     def delete(self):
         self.api.delete(self.uri)
 
+# Push targets {{{
+
 class PushTarget(PushBulletObject):
+    '''
+    Abstract push target object
+    '''
     def __init__(self, api, iden, **data):
         self.api = api
         self.iden = iden
@@ -65,6 +84,9 @@ class PushTarget(PushBulletObject):
 
 
 class Contact(PushTarget):
+    '''
+    Contact to push to
+    '''
     def __repr__(self):
         return '<Contact[%s]: %s <%s>>' % (self.iden, self.name, self.email)
 
@@ -81,6 +103,9 @@ class Contact(PushTarget):
 
 
 class Device(PushTarget):
+    '''
+    Device to push to
+    '''
     def __repr__(self):
         return '<Device[%s]: %s>' % (self.iden, self.model)
 
@@ -94,8 +119,15 @@ class Device(PushTarget):
     @property
     def uri(self):
         return 'devices/%s' % self.iden
+        
+# }}}
+
+# Pushes {{{
 
 class Push(PushBulletObject):
+    '''
+    Abstract push object
+    '''
     type = None
     def __init__(self, **data):
         self.__dict__.update(data)
@@ -126,6 +158,9 @@ class Push(PushBulletObject):
         return 'pushes/%s' % self.iden
 
 class NotePush(Push):
+    '''
+    Note push
+    '''
     type = 'note'
     def __init__(self, title, body, **data):
         self.title, self.body = title, body
@@ -139,6 +174,9 @@ class NotePush(Push):
         return self.title
 
 class LinkPush(Push):
+    '''
+    Link push
+    '''
     type = 'link'
     def __init__(self, title, url, body='', **data):
         self.title, self.url, self.body = title, url, body
@@ -152,6 +190,9 @@ class LinkPush(Push):
         return self.url
 
 class AddressPush(Push):
+    '''
+    Address push
+    '''
     type = 'address'
     def __init__(self, name, address, **data):
         self.name, self.address = name, address
@@ -165,6 +206,9 @@ class AddressPush(Push):
         return '%s (%s)' % (self.name, self.address)
 
 class ListPush(Push):
+    '''
+    List push
+    '''
     type = 'list'
     def __init__(self, title, items, **data):
         self.title, self.items = title, list(items)
@@ -178,6 +222,9 @@ class ListPush(Push):
         return '%s (%d)' % (self.title, len(self.items))
 
 class FilePush(Push):
+    '''
+    File push
+    '''
     type = 'file'
     def __init__(self, file_name, file_type='application/octet-stream', body='', **data):
         self.file_name, self.file_type = file_name, file_type
@@ -200,27 +247,46 @@ class FilePush(Push):
         return self.file_name
 
 class MirrorPush(Push):
+    '''
+    Mirror push (internal usage only)
+    '''
     type = 'mirror'
 
     def send(self, target):
         raise NotImplementedError
 
 class DismissalPush(Push):
+    '''
+    Dismissal push (internal usage only)
+    '''
     type = 'dismissal'
 
     def send(self, target):
         raise NotImplementedError
 
+# }}}
+
+# Main API class {{{
 
 class PushBullet(object):
+    '''
+    Main API class for PushBullet
+    '''
+
     API_URL = 'https://api.pushbullet.com/v2/%s'
 
     def __init__(self, apikey):
+        '''
+        Initialize API object (get API key from https://www.pushbullet.com/account)
+        '''
         self.apikey = apikey
         self.sess = session()
         self.sess.auth = (apikey, '')
 
     def make_push(self, push):
+        '''
+        Factory to create a push object out of raw data in dictionary
+        '''
         pushcls = {
                 'note': NotePush,
                 'list': ListPush,
@@ -233,9 +299,15 @@ class PushBullet(object):
         return pushcls(api=self, **push)
 
     def delete(self, _uri):
+        '''
+        Helper method for DELETE requests to API
+        '''
         self.sess.delete(self.API_URL % _uri).raise_for_status()
 
     def post(self, _uri, **data):
+        '''
+        Helper method for POST requests to API
+        '''
         response = self.sess.post(self.API_URL % _uri, data=data)
         response.raise_for_status()
 
@@ -247,6 +319,9 @@ class PushBullet(object):
         return result
 
     def get(self, _uri, **params):
+        '''
+        Helper method for GET requests to API
+        '''
         response = self.sess.get(self.API_URL % _uri, params=params)
         response.raise_for_status()
 
@@ -258,10 +333,16 @@ class PushBullet(object):
         return result
 
     def upload(self, _uri, data, **files):
+        '''
+        Helper method to upload a file to given URL
+        '''
         response = self.sess.post(_uri, data=data, files=files, auth=()).raise_for_status()
 
     __devices = None
     def devices(self, reset_cache=False):
+        '''
+        Get available devices to push to
+        '''
         if not reset_cache and self.__devices:
             return self.__devices
 
@@ -271,6 +352,9 @@ class PushBullet(object):
 
     __contacts = None
     def contacts(self, reset_cache=False):
+        '''
+        Get available contacts to push to
+        '''
         if not reset_cache and self.__contacts:
             return self.__contacts
 
@@ -279,6 +363,9 @@ class PushBullet(object):
 
 
     def pushes(self, since=0):
+        '''
+        Generator fetches and yields all pushes since given timestamp
+        '''
         if isinstance(since, datetime.date):
             since = since.strftime('%s')
         elif isinstance(since, datetime.timedelta):
@@ -296,23 +383,37 @@ class PushBullet(object):
             pushes = self.get('pushes', cursor=pushes['cursor'])
 
     def me(self):
+        '''
+        Get current user information
+        '''
         return self.get('users/me')
 
     def push(self, target, push):
+        '''
+        Send push to a target
+        '''
         push.send(target)
 
-    def stream(self):
+    def stream(self, skip_nop=True):
+        '''
+        Generator to listen for events on websocket and yield them
+        '''
         from websocket import create_connection
         conn = create_connection('wss://stream.pushbullet.com/websocket/%s' % self.apikey)
         while True:
             event = json.loads(conn.recv())
             evtype = event['type']
+            if skip_nop and evtype == 'nop':
+                continue
+
             event = (NopEvent(self) if evtype == 'nop' else
                      TickleEvent(self, event['subtype']) if evtype == 'tickle' else
                      PushEvent(self, self.make_push(event['push'])) if evtype == 'push' else
                      None)
             if event:
                 yield event
+
+# }}}
 
 #import yaml
 #with open('/usr/local/etc/pushbullet.yml', 'rb') as f:
