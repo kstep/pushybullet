@@ -106,6 +106,10 @@ class Push(PushBulletObject):
         result = target.api.post('pushes', **data)
         self.api = target.api
         self.__dict__.update(result)
+        
+    @property
+    def data(self):
+        raise NotImplementedError
 
     def __eq__(self, other):
         return isinstance(other, Push) and self.iden == other.iden
