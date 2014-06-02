@@ -79,9 +79,12 @@ class PushTarget(PushBulletObject):
     def ident(self):
         raise NotImplementedError
 
-    def push(self, push):
-        push.send(self)
+    def push(self, push=None, **pushargs):
+        if not push:
+            push = self.api.make_push(pushargs)
 
+        push.send(self)
+        return push
 
 class Contact(PushTarget):
     '''
@@ -133,6 +136,9 @@ class Push(PushBulletObject):
         self.__dict__.update(data)
 
     def send(self, target):
+        if not isinstance(target, PushTarget):
+            target = Device(self.api, str(target))
+
         data = self.data
         data.update(target.ident)
         data['type'] = self.type
