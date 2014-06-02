@@ -392,10 +392,16 @@ class PushBullet(object):
         '''
         return self.get('users/me')
 
-    def push(self, target, push):
+    def push(self, target, push=None, **pushargs):
         '''
         Send push to a target
         '''
+        if not isinstance(target, PushTarget):
+            target = Device(self, str(target))
+
+        if not push:
+            push = self.make_push(pushargs)
+
         push.send(target)
 
     def stream(self, skip_nop=True):
