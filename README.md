@@ -31,7 +31,7 @@ device.push(type='address', name='My home', address='Washington, DC')
 for event in api.stream():
     print(event)
     
-# you can iterate over all pushes
+# you can iterate over all pushes (paging is handled transparently for you)
 for push in api.pushes(since=-86400):  # since 1 day ago, also supports int timestamps, date and datetime objects
     print(push)
     
