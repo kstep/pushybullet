@@ -377,6 +377,8 @@ class PushBullet(object):
             since = since.strftime('%s')
         elif isinstance(since, datetime.timedelta):
             since = (datetime.datetime.now() - since).strftime('%s')
+        elif since < 0:
+            since = time.time() + since
 
         pushes = self.get('pushes', modified_after=since)
 
