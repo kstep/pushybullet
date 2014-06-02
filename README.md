@@ -22,7 +22,11 @@ pb.NotePush('title', 'message').send(device)
 # ...or push to device...
 device.push(pb.LinkPush('title', 'http://google.com/'))
 
-# ...or even watch for events! (requires websockets-client)
+# ...or you can take a shortcut if you are in a hurry...
+api.push('deviceiden', type='note', title='title', body='message')
+device.push(type='address', name='My home', address='Washington, DC')
+
+# ...and then watch for events! (requires websockets-client)
 for event in api.stream():
     print(event)
 ```
