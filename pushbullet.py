@@ -241,18 +241,38 @@ class FilePush(Push):
     File push
     '''
     type = 'file'
-    def __init__(self, file_name, file_type='application/octet-stream', body='', **data):
+    def __init__(self, file_name, file_type=None, body='', **data):
         self.file_name, self.file_type = file_name, file_type
         self.body = body
         Push.__init__(self, **data)
 
     def send(self, target):
-        with open(self.file_name, 'rb') as f:
-            req = target.api.get('upload-request', file_name=basename(self.file_name), file_type=self.file_type)
-            target.api.upload(req['upload_url'], data=req['data'], file=f)
+        fh = self.file_name if isinstance(self.file_name, file) else open(self.file_name, 'rb')
+
+        try:
+            file_name = basename(fh.name)
+            file_type = str(self.file_type) if self.file_type else self.guess_type(fh)
+
+            req = target.api.get('upload-request', file_name=file_name, file_type=file_type)
+            target.api.upload(req['upload_url'], data=req['data'], file=fh)
             self.file_name, self.file_type, self.file_url = req['file_name'], req['file_type'], req['file_url']
 
+        finally:
+            fh.close()
+
         Push.send(self, target)
+        
+    def guess_type(self, file):
+        try:
+            import magic
+            guesser = magic.open(magic.MIME_TYPE)
+            guesser.load()
+            mime_type = guesser.buffer(file.read(1024))
+            file.seek(0)
+            return mime_type or 'application/octet-stream'
+
+        except:
+            return 'application/octet-stream'
 
     @property
     def data(self):
