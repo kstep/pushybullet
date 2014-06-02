@@ -297,10 +297,12 @@ class PushBullet(object):
         while True:
             event = json.loads(conn.recv())
             evtype = event['type']
-            yield (NopEvent(self) if evtype == 'nop' else
-                   TickleEvent(self, event['subtype']) if evtype == 'tickle' else
-                   PushEvent(self, self.make_push(event['push'])) if evtype == 'push' else
-                   None)
+            event = (NopEvent(self) if evtype == 'nop' else
+                     TickleEvent(self, event['subtype']) if evtype == 'tickle' else
+                     PushEvent(self, self.make_push(event['push'])) if evtype == 'push' else
+                     None)
+            if event:
+                yield event
 
 #import yaml
 #with open('/usr/local/etc/pushbullet.yml', 'rb') as f:
