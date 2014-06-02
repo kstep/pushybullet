@@ -33,8 +33,8 @@ class TickleEvent(Event):
         Event.__init__(self, api)
         self.subtype = subtype
 
-    def pushes(self):
-        return self.api.pushes(since=self.time)
+    def pushes(self, skip_empty=False):
+        return self.api.pushes(since=self.time, skip_empty=skip_empty)
 
     def __repr__(self):
         return '<%s[%s] @%s>' % (self.__class__.__name__, self.subtype, self.time)
@@ -363,7 +363,7 @@ class PushBullet(object):
         return self.__contacts
 
 
-    def pushes(self, since=0):
+    def pushes(self, since=0, skip_empty=True):
         '''
         Generator fetches and yields all pushes since given timestamp
         '''
@@ -376,6 +376,9 @@ class PushBullet(object):
 
         while True:
             for push in pushes['pushes']:
+                if skip_empty and not push.get('type'):
+                    continue
+
                 yield self.make_push(push)
 
             if not pushes.get('cursor'):
