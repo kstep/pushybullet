@@ -13,6 +13,8 @@ api = pb.PushBullet(API_KEY)
 # you can get .devices() (or .contacts() in the same way)...
 devices = api.devices()
 device = devices[0]
+# or create device yourself (if you know device iden):
+#device = pb.Device(api, 'deviden')
 
 # ...send a push to device or contact...
 pb.NotePush('title', 'message').send(device)
