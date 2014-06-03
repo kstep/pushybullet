@@ -7,7 +7,10 @@ import pushbullet
 import sys
 import os
 
-from ConfigParser import SafeConfigParser as ConfigParser
+try:
+    from ConfigParser import SafeConfigParser as ConfigParser
+except ImportError:
+    from configparser import SafeConfigParser as ConfigParser
 
 try:
     config = ConfigParser()
