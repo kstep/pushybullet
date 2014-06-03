@@ -39,6 +39,7 @@ list_group.add_argument('--item', help='list item', action='append', required=Tr
 
 file_group = subparsers.add_parser('file')
 file_group.add_argument('--file', help='file name', type=argparse.FileType('rb'), default=sys.stdin, dest='file_name')
+file_group.add_argument('--mime', help='file mime type', type=str, default='', dest='file_type')
 file_group.add_argument('--body', help='file message', default='', type=str)
 
 address_group = subparsers.add_parser('address')
