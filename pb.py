@@ -48,6 +48,12 @@ address_group.add_argument('--address', help='address', required=True, type=str)
 
 devices_group = subparsers.add_parser('devices', help='list all devices')
 
+contacts_group = subparsers.add_parser('contacts', help='list all contacts')
+
+pushes_group = subparsers.add_parser('pushes', help='list all pushes')
+pushes_group.add_argument('--since', help='show pushes since this timestamp', type=int, default=0)
+pushes_group.add_argument('--with-empty', help='include empty pushes', action='store_false', dest='skip_empty', default=True)
+
 watch_group = subparsers.add_parser('watch', help='watch for events')
 watch_group.add_argument('--with-nop', help='include "nop" events', action='store_false', dest='skip_nop', default=True)
 watch_group.add_argument('--with-pushes', help='output arrived pushes', action='store_true', dest='with_pushes', default=False)
@@ -60,7 +66,17 @@ if __name__ == '__main__':
     if args['type'] == 'devices':
         devices = api.devices()
         for device in devices:
-            print(device.iden, device.model)
+            print(device.iden, '%s %s' % (device.manufacturer, device.model))
+
+    elif args['type'] == 'contacts':
+        contacts = api.contacts()
+        for contact in contacts:
+            print(contact.iden, '%s <%s>' % (contact.name, contact.email))
+
+    elif args['type'] == 'pushes':
+        pushes = api.pushes(since=args['since'], skip_empty=args['skip_empty'])
+        for push in pushes:
+            print(push)
 
     elif args['type'] == 'watch':
         print('Watching for push events (press <Ctrl-C> to interrupt)...')
