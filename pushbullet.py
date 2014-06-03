@@ -28,13 +28,14 @@ class TickleEvent(Event):
     '''
     Tickle event (user pushes)
     '''
-    __slots__ = ['api', 'time', 'subtype']
-    def __init__(self, api, subtype):
+    __slots__ = ['api', 'time', 'since', 'subtype']
+    def __init__(self, api, subtype, since):
         Event.__init__(self, api)
         self.subtype = subtype
+        self.since = since
 
     def pushes(self, skip_empty=False):
-        return self.api.pushes(since=self.time, skip_empty=skip_empty)
+        return self.api.pushes(since=self.since, skip_empty=skip_empty)
 
     def __repr__(self):
         return '<%s[%s] @%s>' % (self.__class__.__name__, self.subtype, self.time)
@@ -455,6 +456,8 @@ class PushBullet(object):
         '''
         from websocket import create_connection
         conn = create_connection('wss://stream.pushbullet.com/websocket/%s' % self.apikey)
+        last_ts = time.time()
+
         while True:
             event = json.loads(conn.recv())
             evtype = event['type']
@@ -462,9 +465,10 @@ class PushBullet(object):
                 continue
 
             event = (NopEvent(self) if evtype == 'nop' else
-                     TickleEvent(self, event['subtype']) if evtype == 'tickle' else
+                     TickleEvent(self, event['subtype'], since=last_ts) if evtype == 'tickle' else
                      PushEvent(self, self.make_push(event['push'])) if evtype == 'push' else
                      None)
+            last_ts = time.time()
             if event:
                 yield event
 
