@@ -4,6 +4,7 @@ from __future__ import print_function
 
 import argparse
 import pushbullet
+import time
 import sys
 import os
 
@@ -74,7 +75,7 @@ def command_devices(api, args):
 def command_pushes(api, args):
     pushes = api.pushes(since=args['since'], skip_empty=args['skip_empty'])
     for push in pushes:
-        print(push)
+        print_push(push)
 
 def command_contacts(api, args):
     contacts = api.contacts()
@@ -86,15 +87,15 @@ def command_watch(api, args):
 
     try:
         for event in api.stream(skip_nop=args['skip_nop']):
-            print(event)
+            print_event(event)
 
             if args['with_pushes']:
                 if isinstance(event, pushbullet.TickleEvent):
                     for push in event.pushes(skip_empty=args['skip_empty']):
-                        print(push)
+                        print_push(push)
 
                 elif isinstance(event, pushbullet.PushEvent):
-                    print(event.push)
+                    print_push(event.push)
 
     except KeyboardInterrupt:
         print('Watching stopped')
@@ -107,6 +108,26 @@ def command_push(api, args):
         print('... pushing to %s ...' % device)
         push.send(device)
     print('... all done!')
+
+def print_push(push):
+    print('%(created)s %(type)s %(iden)s [%(flags)s] %(sender_iden)s <%(sender_email)s> -> %(receiver_iden)s <%(receiver_email)s> %(target_device_iden)s %(push)s' % dict(
+        created=time.strftime('%b %d %Y %H:%M:%S', time.localtime(push.created)),
+        type=push.type, iden=push.iden, push=str(push),
+        target_device_iden=getattr(push, 'target_device_iden', '-'),
+        sender_iden=getattr(push, 'sender_iden', 'N/A'), sender_email=getattr(push, 'sender_email', 'N/A'),
+        receiver_iden=getattr(push, 'receiver_iden', 'N/A'), receiver_email=getattr(push, 'receiver_email', 'N/A'),
+        flags=('A' if push.active else '') + ('D' if getattr(push, 'dismissed', False) else '')))
+
+def print_event(event):
+    print('%(time)s %(type)s %(data)s' % dict(
+        time=time.strftime('%b %d %Y %H:%M:%S', time.localtime(event.time)),
+        type='tickle' if isinstance(event, pushbullet.TickleEvent) else
+             'push' if isinstance(event, pushbullet.PushEvent) else
+             'nop' if isinstance(event, pushbullet.NopEvent) else
+             'unknown',
+        data=event.subtype if isinstance(event, pushbullet.TickleEvent) else
+             event.push.type if isinstance(event, pushbullet.PushEvent) else
+             ''))
 
 def main():
     parser = get_parser()
