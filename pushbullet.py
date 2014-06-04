@@ -22,7 +22,7 @@ class NopEvent(Event):
     '''
     Nop event (keep-alive ticks)
     '''
-    pass
+    __slots__ = ['api', 'time']
 
 class TickleEvent(Event):
     '''
