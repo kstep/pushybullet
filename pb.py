@@ -42,7 +42,8 @@ def get_parser():
     list_group.add_argument('--item', help='list item', action='append', required=True)
 
     file_group = subparsers.add_parser('file')
-    file_group.add_argument('--file', help='file name', type=argparse.FileType('rb'), default=sys.stdin, dest='file_name')
+    file_group.add_argument('--file', help='file name to push', type=argparse.FileType('rb'), default=sys.stdin, dest='file')
+    file_group.add_argument('--name', help='user visible file name', type=str, default='', dest='file_name')
     file_group.add_argument('--mime', help='file mime type', type=str, default='', dest='file_type')
     file_group.add_argument('--body', help='file message', default='', type=str)
 
@@ -100,11 +101,12 @@ def command_watch(api, args):
 
 def command_push(api, args):
     devices = args.pop('target') or api.devices()
-    print('Pushing to %d devices...' % len(devices))
+    print('... preparing push for %d devices ...' % len(devices))
+    push = api.make_push(args)
     for device in devices:
         print('... pushing to %s ...' % device)
-        api.push(device, **args)
-    print('All done!')
+        push.send(device)
+    print('... all done!')
 
 def main():
     parser = get_parser()

@@ -242,8 +242,9 @@ class FilePush(Push):
     File push
     '''
     type = 'file'
-    def __init__(self, file_name, file_type=None, body='', **data):
-        self.file_name, self.file_type = file_name, file_type
+    def __init__(self, file, file_name=None, file_type=None, body='', **data):
+        self.file, self.file_name, self.file_type = file, file_name, file_type
+        self.file_url = None
         self.body = body
         Push.__init__(self, **data)
 
@@ -251,18 +252,18 @@ class FilePush(Push):
         if not isinstance(target, PushTarget):
             target = Device(self.api, str(target))
 
-        fh = self.file_name if isinstance(self.file_name, file) else open(self.file_name, 'rb')
+        if not self.file_url:  # file not uploaded yet
+            fh = self.file if isinstance(self.file, file) else open(self.file, 'rb')
 
-        try:
-            file_name = basename(fh.name)
-            file_type = str(self.file_type) if self.file_type else self.guess_type(fh)
+            try:
+                file_name = str(self.file_name) if self.file_name else basename(fh.name)
+                file_type = str(self.file_type) if self.file_type else self.guess_type(fh)
+                req = target.api.get('upload-request', file_name=file_name, file_type=file_type)
+                target.api.upload(req['upload_url'], data=req['data'], file=fh)
+                self.file_name, self.file_type, self.file_url = req['file_name'], req['file_type'], req['file_url']
 
-            req = target.api.get('upload-request', file_name=file_name, file_type=file_type)
-            target.api.upload(req['upload_url'], data=req['data'], file=fh)
-            self.file_name, self.file_type, self.file_url = req['file_name'], req['file_type'], req['file_url']
-
-        finally:
-            fh.close()
+            finally:
+                fh.close()
 
         Push.send(self, target)
         
