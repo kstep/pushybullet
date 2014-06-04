@@ -428,11 +428,16 @@ class PushBullet(object):
 
             pushes = self.get('pushes', cursor=pushes['cursor'])
 
-    def me(self):
+    __me = None
+    def me(self, reset_cache=False):
         '''
         Get current user information
         '''
-        return self.get('users/me')
+        if not reset_cache and self.__me:
+            return self.__me
+
+        self.__me = self.get('users/me')
+        return self.__me
 
     def push(self, target, push=None, **pushargs):
         '''
