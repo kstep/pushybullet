@@ -178,7 +178,7 @@ class NotePush(Push):
     Note push
     '''
     type = 'note'
-    def __init__(self, title, body, **data):
+    def __init__(self, body, title='', **data):
         self.title, self.body = title, body
         Push.__init__(self, **data)
 
@@ -194,7 +194,7 @@ class LinkPush(Push):
     Link push
     '''
     type = 'link'
-    def __init__(self, title, url, body='', **data):
+    def __init__(self, url, title='', body='', **data):
         self.title, self.url, self.body = title, url, body
         Push.__init__(self, **data)
 
@@ -210,7 +210,7 @@ class AddressPush(Push):
     Address push
     '''
     type = 'address'
-    def __init__(self, name, address, **data):
+    def __init__(self, address, name='', **data):
         self.name, self.address = name, address
         Push.__init__(self, **data)
 
@@ -226,7 +226,7 @@ class ListPush(Push):
     List push
     '''
     type = 'list'
-    def __init__(self, title, items, **data):
+    def __init__(self, items, title='', **data):
         self.title, self.items = title, list(items)
         Push.__init__(self, **data)
 

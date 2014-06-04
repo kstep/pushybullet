@@ -29,27 +29,27 @@ def get_parser():
     subparsers = parser.add_subparsers(help='message type', dest='type')
 
     note_group = subparsers.add_parser('note')
-    note_group.add_argument('--title', help='note title', required=True, type=str)
-    note_group.add_argument('--body', help='note body', required=True, type=str)
+    note_group.add_argument('body', help='note body', type=str, default='', nargs='?')
+    note_group.add_argument('--title', help='note title', default='', type=str)
 
     link_group = subparsers.add_parser('link')
+    link_group.add_argument('url', help='link URL', type=str)
     link_group.add_argument('--title', help='link title', default='', type=str)
-    link_group.add_argument('--url', help='link URL', required=True, type=str)
     link_group.add_argument('--body', help='link messsage', default='', type=str)
 
     list_group = subparsers.add_parser('list')
+    list_group.add_argument('items', help='list item', action='append', nargs='+', metavar='item')
     list_group.add_argument('--title', help='list title', default='', type=str)
-    list_group.add_argument('--item', help='list item', action='append', required=True)
 
     file_group = subparsers.add_parser('file')
-    file_group.add_argument('--file', help='file name to push', type=argparse.FileType('rb'), default=sys.stdin, dest='file')
+    file_group.add_argument('file', help='file name to push', type=argparse.FileType('rb'), default=sys.stdin, nargs='?')
     file_group.add_argument('--name', help='user visible file name', type=str, default='', dest='file_name')
     file_group.add_argument('--mime', help='file mime type', type=str, default='', dest='file_type')
     file_group.add_argument('--body', help='file message', default='', type=str)
 
     address_group = subparsers.add_parser('address')
+    address_group.add_argument('address', help='address', type=str)
     address_group.add_argument('--name', help='address name', default='', type=str)
-    address_group.add_argument('--address', help='address', required=True, type=str)
 
     devices_group = subparsers.add_parser('devices', help='list all devices')
 
