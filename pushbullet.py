@@ -242,8 +242,9 @@ class FilePush(Push):
     File push
     '''
     type = 'file'
-    def __init__(self, file, file_name=None, file_type=None, body='', **data):
-        self.file, self.file_name, self.file_type = file, file_name, file_type
+    def __init__(self, file=None, file_name=None, file_type=None, body='', **data):
+        assert(file or file_name)
+        self.file, self.file_name, self.file_type = file or file_name, file_name, file_type
         self.file_url = None
         self.body = body
         Push.__init__(self, **data)
