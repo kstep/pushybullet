@@ -111,7 +111,7 @@ def command_push(api, args):
 
 def print_push(push):
     print('%(created)s %(type)s %(iden)s [%(flags)s] %(sender_iden)s <%(sender_email)s> -> %(receiver_iden)s <%(receiver_email)s> %(target_device_iden)s %(push)s' % dict(
-        created=time.strftime('%b %d %Y %H:%M:%S', time.localtime(push.created)),
+        created=time.strftime('%b %d %Y %H:%M:%S', time.localtime(getattr(push, 'created', 0))),
         type=push.type, iden=push.iden, push=str(push),
         target_device_iden=getattr(push, 'target_device_iden', '-'),
         sender_iden=getattr(push, 'sender_iden', 'N/A'), sender_email=getattr(push, 'sender_email', 'N/A'),
