@@ -2,11 +2,11 @@
 
 from distutils.core import setup
 
-setup(name='PushBullet',
+setup(name='PushyBullet',
       version='1.0',
       description='PushBullet APIv2 python bindings',
       author='Konstantin Stepanov',
       author_email='me@kstep.me',
-      url='http://github.com/kstep/pushbullet/',
-      py_modules=['pushbullet'],
+      url='http://github.com/kstep/pushybullet/',
+      py_modules=['pushybullet'],
       scripts=['pb'])

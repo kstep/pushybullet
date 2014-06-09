@@ -3,7 +3,7 @@
 from __future__ import print_function
 
 import argparse
-import pushbullet
+import pushybullet
 import time
 import sys
 import os

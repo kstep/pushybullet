@@ -1,10 +1,10 @@
-pushbullet
-==========
+pushybullet
+===========
 
 Python bindings for Pushbullet (http://pushbullet.com/) API v2
 
 ```python
-import pushbullet as pb
+import pushybullet as pb
 
 API_KEY = '0123456789'
 
