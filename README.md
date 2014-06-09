@@ -25,6 +25,8 @@ device.push(pb.LinkPush('title', 'http://google.com/'))
 # ...or you can take a shortcut if you are in a hurry...
 api.push('deviceiden', type='note', title='title', body='message')
 device.push(type='address', name='My home', address='Washington, DC')
+# you can omit `type` argument and let it be guessed by other args
+device.push(items=['celery', 'tomatos', 'milk'], title='Shopping list')  # this is a list push
 
 # ...and then watch for events! (requires websockets-client)
 # (warning! infinite loop here!)
