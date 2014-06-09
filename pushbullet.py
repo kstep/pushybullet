@@ -324,7 +324,14 @@ class PushBullet(object):
         self.sess = session()
         self.sess.auth = (apikey, '')
 
-    def make_push(self, push):
+    def get_type_by_args(self, args):
+        return args.get('type') or ('url' if 'url' in args else
+                     'list' if 'items' in args else
+                     'address' if 'address' in args else
+                     'file' if 'file' in args or 'file_name' in args else
+                     'note')
+
+    def make_push(self, pushargs):
         '''
         Factory to create a push object out of raw data in dictionary
         '''
@@ -336,8 +343,8 @@ class PushBullet(object):
                 'address': AddressPush,
                 'mirror': MirrorPush,
                 'dismissal': DismissalPush,
-                }.get(push.get('type'), Push)
-        return pushcls(**push).bind(self)
+                }.get(self.get_type_by_args(pushargs), Push)
+        return pushcls(**pushargs).bind(self)
 
     def delete(self, _uri):
         '''
