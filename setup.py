@@ -9,4 +9,11 @@ setup(name='PushyBullet',
       author_email='me@kstep.me',
       url='http://github.com/kstep/pushybullet/',
       py_modules=['pushybullet'],
-      scripts=['pb'])
+      scripts=['pb'],
+      classifiers=[
+          'Topic :: Software Development :: Libraries',
+          'Topic :: Utilities',
+          'Topic :: Internet',
+          'Development Status :: 5 - Production/Stable',
+          'Environment :: Console',
+          ])
