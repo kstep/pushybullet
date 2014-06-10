@@ -101,12 +101,13 @@ def command_watch(api, args):
         print('Watching stopped')
 
 def command_push(api, args):
-    devices = args.pop('target') or api.devices()
-    print('... preparing push for %d devices ...' % len(devices))
+    devices = args.pop('target') or [api]
+    print('... preparing push ...')
     push = api.make_push(args)
     for device in devices:
         print('... pushing to %s ...' % device)
         push.send(device)
+
     print('... all done!')
 
 def print_push(push):

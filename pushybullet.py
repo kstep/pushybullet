@@ -160,15 +160,20 @@ class Push(PushBulletObject):
     def __init__(self, **data):
         self.__dict__.update(data)
 
-    def send(self, target):
-        if not isinstance(target, PushTarget):
+    def send(self, target=None):
+        if target is None:
+            target = self.api
+
+        elif not isinstance(target, PushTarget):
             target = Device(self.api, str(target))
+
+        self.bind(target.api)
 
         data = self.data
         data.update(target.ident)
         data['type'] = self.type
-        result = target.api.post('pushes', **data)
-        self.bind(target.api)
+
+        result = self.api.post('pushes', **data)
         self.__dict__.update(result)
         
     def resend(self):
@@ -330,7 +335,7 @@ class DismissalPush(Push):
 
 # Main API class {{{
 
-class PushBullet(object):
+class PushBullet(PushTarget):
     '''
     Main API class for PushBullet
     '''
@@ -488,15 +493,7 @@ class PushBullet(object):
             push = self.make_push(pushargs)
 
         if target is None:
-            for d in self.devices():
-                if d.active and d.pushable:
-                    push.send(d)
-
-            return push
-
-            #for c in self.contacts():
-                #if c.active and c.pushable:
-                    #push.send(c)
+            target = self
 
         elif not isinstance(target, PushTarget):
             target = Device(self, str(target))
@@ -507,6 +504,14 @@ class PushBullet(object):
     def bind(self, obj):
         assert(isinstance(obj, PushBulletObject))
         return obj.bind(self)
+
+    @property
+    def ident(self):
+        return {}
+
+    @property
+    def api(self):
+        return self
 
     def stream(self, skip_nop=True):
         '''
@@ -529,6 +534,9 @@ class PushBullet(object):
             last_ts = time.time()
             if event:
                 yield event
+
+    def __str__(self):
+        return '<PushBullet>'
 
 # }}}
 
