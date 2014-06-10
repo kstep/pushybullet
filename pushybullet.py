@@ -397,8 +397,8 @@ class PushBullet(object):
 
         self.__devices = map(lambda d: Device(self, **d), self.get('devices')['devices'])
         return self.__devices
-        
-        
+
+
     def create_device(self, nickname, type='stream'):
         return Device(self, **self.post('devices', nickname=nickname, type=type))
 
@@ -414,6 +414,11 @@ class PushBullet(object):
         self.__contacts = map(lambda c: Contact(self, **c), self.get('contacts')['contacts'])
         return self.__contacts
 
+    def __getitem__(self, device_iden):
+        try:
+            return next(d for d in self.devices() if d.iden == device_iden)
+        except StopIteration:
+            raise KeyError(device_iden)
 
     def pushes(self, since=0, skip_empty=True):
         '''
