@@ -171,6 +171,12 @@ class Push(PushBulletObject):
         self.bind(target.api)
         self.__dict__.update(result)
         
+    def resend(self):
+        if not hasattr(self, 'target_device_iden'):
+            raise PushBulletError('push was not sent yet')
+
+        self.send(self.target_device_iden)
+
     @property
     def data(self):
         raise NotImplementedError
