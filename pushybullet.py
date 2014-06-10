@@ -120,7 +120,10 @@ class Device(PushTarget):
     Device to push to
     '''
     def __repr__(self):
-        return '<Device[%s]: %s>' % (self.iden, self.model)
+        return '<Device[%s]: %s>' % (self.iden,
+                getattr(self, 'nickname', None) or
+                getattr(self, 'model', None) or
+                'Unnamed')
 
     def __str__(self):
         return self.iden
