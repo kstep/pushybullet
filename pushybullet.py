@@ -397,6 +397,10 @@ class PushBullet(object):
 
         self.__devices = map(lambda d: Device(self, **d), self.get('devices')['devices'])
         return self.__devices
+        
+        
+    def create_device(self, nickname, type='stream'):
+        return Device(self, **self.post('devices', nickname=nickname, type=type))
 
 
     __contacts = None
