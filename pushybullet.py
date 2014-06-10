@@ -96,6 +96,9 @@ class PushTarget(PushBulletObject):
         push.send(self)
         return push
 
+    def __unicode__(self):
+        return unicode(str(self), 'utf-8')
+
 class Contact(PushTarget):
     '''
     Contact to push to
