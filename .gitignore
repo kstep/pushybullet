@@ -1,0 +1,10 @@
+*.pyc
+*.pyo
+*.tar.xz
+*.tar.gz
+MANIFEST
+PKGBUILD
+build/
+dist/
+pkg/
+src/
