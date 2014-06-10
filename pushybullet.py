@@ -132,7 +132,14 @@ class Device(PushTarget):
     @property
     def uri(self):
         return 'devices/%s' % self.iden
-        
+
+    def create(self):
+        if self.iden:
+            raise PushBulletError('device already exists')
+
+        self.__dict__.update(self.api.post('devices', nickname=self.nickname, type=getattr(self, 'type', 'stream')))
+        return self
+
 # }}}
 
 # Pushes {{{
@@ -400,7 +407,7 @@ class PushBullet(object):
 
 
     def create_device(self, nickname, type='stream'):
-        return Device(self, **self.post('devices', nickname=nickname, type=type))
+        return Device(self, None, nickname=nickname, type=type).create()
 
 
     __contacts = None
