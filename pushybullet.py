@@ -107,7 +107,7 @@ class Contact(PushTarget):
         return '<Contact[%s]: %s <%s>>' % (self.iden, self.name, self.email)
 
     def __str__(self):
-        return self.email
+        return '%s <%s>' % (self.name, self.email)
 
     @property
     def ident(self):
@@ -129,7 +129,9 @@ class Device(PushTarget):
                 'Unnamed')
 
     def __str__(self):
-        return self.iden
+        return (getattr(self, 'nickname', None) or
+                getattr(self, 'model', None) or
+                self.iden)
 
     @property
     def ident(self):
