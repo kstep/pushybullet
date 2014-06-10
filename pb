@@ -90,11 +90,11 @@ def command_watch(api, args):
             print_event(event)
 
             if args['with_pushes']:
-                if isinstance(event, pushbullet.TickleEvent):
+                if isinstance(event, pushybullet.TickleEvent):
                     for push in event.pushes(skip_empty=args['skip_empty']):
                         print_push(push)
 
-                elif isinstance(event, pushbullet.PushEvent):
+                elif isinstance(event, pushybullet.PushEvent):
                     print_push(event.push)
 
     except KeyboardInterrupt:
@@ -121,18 +121,18 @@ def print_push(push):
 def print_event(event):
     print('%(time)s %(type)s %(data)s' % dict(
         time=time.strftime('%b %d %Y %H:%M:%S', time.localtime(event.time)),
-        type='tickle' if isinstance(event, pushbullet.TickleEvent) else
-             'push' if isinstance(event, pushbullet.PushEvent) else
-             'nop' if isinstance(event, pushbullet.NopEvent) else
+        type='tickle' if isinstance(event, pushybullet.TickleEvent) else
+             'push' if isinstance(event, pushybullet.PushEvent) else
+             'nop' if isinstance(event, pushybullet.NopEvent) else
              'unknown',
-        data=event.subtype if isinstance(event, pushbullet.TickleEvent) else
-             event.push.type if isinstance(event, pushbullet.PushEvent) else
+        data=event.subtype if isinstance(event, pushybullet.TickleEvent) else
+             event.push.type if isinstance(event, pushybullet.PushEvent) else
              ''))
 
 def main():
     parser = get_parser()
     args = vars(parser.parse_args())
-    api = pushbullet.PushBullet(args.pop('apikey'))
+    api = pushybullet.PushBullet(args.pop('apikey'))
     command = globals().get('command_%s' % args['type'], command_push)
     command(api, args)
 
