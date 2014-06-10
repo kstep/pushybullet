@@ -434,7 +434,7 @@ class PushBullet(object):
             return next(d for d in self.devices() if d.iden == device_iden)
         except StopIteration:
             try:
-                return next(d for d in self.devices() if d.model == device_iden)
+                return next(d for d in self.devices() if str(d) == device_iden)
             except StopIteration:
                 raise KeyError(device_iden)
 
