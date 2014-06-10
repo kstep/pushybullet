@@ -425,7 +425,10 @@ class PushBullet(object):
         try:
             return next(d for d in self.devices() if d.iden == device_iden)
         except StopIteration:
-            raise KeyError(device_iden)
+            try:
+                return next(d for d in self.devices() if d.model == device_iden)
+            except StopIteration:
+                raise KeyError(device_iden)
 
     def pushes(self, since=0, skip_empty=True):
         '''
