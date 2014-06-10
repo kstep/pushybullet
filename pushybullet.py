@@ -474,15 +474,26 @@ class PushBullet(object):
         self.__me = self.get('users/me')
         return self.__me
 
-    def push(self, target, push=None, **pushargs):
+    def push(self, push=None, target=None, **pushargs):
         '''
-        Send push to a target
+        Send push to a target (to all devices by default)
         '''
-        if not isinstance(target, PushTarget):
-            target = Device(self, str(target))
-
         if not push:
             push = self.make_push(pushargs)
+
+        if target is None:
+            for d in self.devices():
+                if d.active and d.pushable:
+                    push.send(d)
+
+            return push
+
+            #for c in self.contacts():
+                #if c.active and c.pushable:
+                    #push.send(c)
+
+        elif not isinstance(target, PushTarget):
+            target = Device(self, str(target))
 
         push.send(target)
         return push
