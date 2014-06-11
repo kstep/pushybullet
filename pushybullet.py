@@ -124,7 +124,7 @@ class PushTarget(PushBulletObject):
         :param dict pushargs: parameters to construct push object
         '''
         if not isinstance(push, Push):
-            push = self.api.make_push(push or pushargs)
+            push = self.api.make_push(pushargs, push)
 
         push.send(self)
         return push
@@ -491,15 +491,15 @@ class PushBullet(PushTarget):
                      'file' if 'file' in args or 'file_name' in args else
                      'note')
 
-    def get_push_by_class(self, arg):
+    def get_push_by_class(self, arg, args={}):
         if isinstance(arg, file):
-            return FilePush(arg)
+            return FilePush(arg, **args)
         elif isinstance(arg, buffer):
-            return FilePush(StringIO(arg))
+            return FilePush(StringIO(arg), **args)
 
         # any iteratable (except for strings) is a list push
         elif hasattr(arg, '__iter__') and not isinstance(arg, (str, unicode)):
-            return ListPush(list(arg))
+            return ListPush(list(arg), **args)
 
         # default is a note push
         else:
@@ -507,11 +507,11 @@ class PushBullet(PushTarget):
 
             # special case: looks like url, therefore it is an link push
             if arg.startswith(('http://', 'https://', 'ftp://', 'ftps://', 'mailto:')):
-                return LinkPush(arg)
+                return LinkPush(arg, **args)
 
-            return NotePush(arg)
+            return NotePush(arg, **args)
 
-    def make_push(self, pushargs):
+    def make_push(self, pushargs, pusharg=None):
         '''
         Factory to create a push object out of raw data in dictionary
 
@@ -531,12 +531,8 @@ class PushBullet(PushTarget):
 
         :param dict pushargs: a dict of parameters to compose a push object
         '''
-        # identity transform
-        if isinstance(pushargs, Push):
-            return pushargs
-
         # a set of arguments in a dictionary
-        if isinstance(pushargs, dict):
+        if not pusharg:
             pushcls = {
                     'note': NotePush,
                     'list': ListPush,
@@ -550,7 +546,7 @@ class PushBullet(PushTarget):
 
         else:
             # otherwise, apply a set of heuristics
-            push = self.get_push_by_class(pushargs)
+            push = self.get_push_by_class(pusharg, pushargs)
 
         return push.bind(self)
 
@@ -734,7 +730,7 @@ class PushBullet(PushTarget):
         :returns: push just sent
         '''
         if not isinstance(push, Push):
-            push = self.make_push(push or pushargs)
+            push = self.make_push(pushargs, push)
 
         if target is None:
             target = self
