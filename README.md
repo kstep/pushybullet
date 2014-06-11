@@ -119,7 +119,7 @@ for push in api.pushes(since=-86400):  # since 1 day ago, also supports int time
 
 The `since` argument accepts pretty any sensable date/time values, like integers (unix timestamps for positive values
 and number of seconds in the past for negative values), timedelta objects (time span in the past), date and datetime
-objects.
+objects. If it's string, `dateutil.parser.parse()` will be used to parse it.
 
 If you omit `since` parameter, you will get all pushes you have ever done in this account.
 
