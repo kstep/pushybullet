@@ -54,6 +54,16 @@ so if you want to get really fresh (non cached) data, use `reset_cache=True` arg
 devices = api.devices(reset_cache=True)  # ignore cache!
 ```
 
+## Getting current account info
+
+To get current account info use `api.me()` method:
+
+```python
+me = api.me()
+```
+
+The method returns simple dictionary. It also caches result like `contacts()` and `devices()` methods, and like them it supports `reset_cache=True` parameter.
+
 ## Pushing
 
 Pushing works in a lot number of ways.
