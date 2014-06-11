@@ -137,7 +137,9 @@ class Contact(PushTarget):
     Contact to push to
     '''
     def __repr__(self):
-        return '<Contact[%s]: %s <%s>>' % (self.iden, self.name, self.email)
+        return '<Contact[%s]: %s <%s>>' % (self.iden,
+                getattr(self, 'name', 'Unnamed'),
+                getattr(self, 'email', None) or getattr(self, 'email_normalized'))
 
     def __str__(self):
         return '%s <%s>' % (self.name, self.email)
@@ -211,11 +213,8 @@ class Push(PushBulletObject):
         :param target: push target
         :type target: PushTarget|str|None
         '''
-        if target is None:
-            target = self.api
-
-        elif not isinstance(target, PushTarget):
-            target = Device(self.api, str(target))
+        if not isinstance(target, PushTarget):
+            target = self.api.make_target(target)
 
         self.bind(target.api)
 
@@ -406,10 +405,8 @@ class FilePush(Push):
         Push.__init__(self, **data)
 
     def send(self, target=None):
-        if target is None:
-            target = self.api
-        elif not isinstance(target, PushTarget):
-            target = Device(self.api, str(target))
+        if not isinstance(target, PushTarget):
+            target = self.api.make_target(target)
 
         if not self.file_url:  # file not uploaded yet
             fh = self.file if isinstance(self.file, file) else open(self.file, 'rb')
@@ -710,6 +707,17 @@ class PushBullet(PushTarget):
         self.__me = self.get('users/me')
         return self.__me
 
+    def make_target(self, target):
+        if target is None:
+            return self
+
+        if isinstance(target, PushTarget):
+            return target
+
+        target = str(target)
+        return (Device(self, target) if '@' not in target else
+                Contact(self, None, email_normalized=target))
+
     def push(self, push=None, target=None, **pushargs):
         '''
         Send push to a target (to all devices by default)
@@ -732,13 +740,7 @@ class PushBullet(PushTarget):
         if not isinstance(push, Push):
             push = self.make_push(pushargs, push)
 
-        if target is None:
-            target = self
-
-        elif not isinstance(target, PushTarget):
-            target = Device(self, str(target))
-
-        push.send(target)
+        push.bind(self).send(target)
         return push
 
     def bind(self, obj):
