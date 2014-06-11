@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 setup(name='PushyBullet',
-      version='1.2',
+      version='1.2.1',
       description='PushBullet APIv2 python bindings',
       author='Konstantin Stepanov',
       author_email='me@kstep.me',
@@ -11,9 +11,9 @@ setup(name='PushyBullet',
       py_modules=['pushybullet'],
       install_requires=[
           'requests>=2.3.0',
-          'websocket-client>=0.12.0',
-          'dateutil>=2.2',
-          'magic>=5.18',
+          #'websocket-client>=0.12.0',
+          #'dateutil>=2.2',
+          #'magic>=5.18',
           ],
       scripts=['pb'],
       classifiers=[
