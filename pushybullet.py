@@ -1,6 +1,7 @@
 # -*- encoding: utf-8 -*-
 from requests import session
 from os.path import basename
+from StringIO import StringIO
 import datetime
 import json
 import time
@@ -122,8 +123,8 @@ class PushTarget(PushBulletObject):
         :param Push push: a push object
         :param dict pushargs: parameters to construct push object
         '''
-        if not push:
-            push = self.api.make_push(pushargs)
+        if not isinstance(push, Push):
+            push = self.api.make_push(push or pushargs)
 
         push.send(self)
         return push
@@ -490,6 +491,26 @@ class PushBullet(PushTarget):
                      'file' if 'file' in args or 'file_name' in args else
                      'note')
 
+    def get_push_by_class(self, arg):
+        if isinstance(arg, file):
+            return FilePush(arg)
+        elif isinstance(arg, buffer):
+            return FilePush(StringIO(arg))
+
+        # any iteratable (except for strings) is a list push
+        elif hasattr(arg, '__iter__') and not isinstance(arg, (str, unicode)):
+            return ListPush(list(arg))
+
+        # default is a note push
+        else:
+            arg = str(arg)
+
+            # special case: looks like url, therefore it is an link push
+            if arg.startswith(('http://', 'https://', 'ftp://', 'ftps://', 'mailto:')):
+                return LinkPush(arg)
+
+            return NotePush(arg)
+
     def make_push(self, pushargs):
         '''
         Factory to create a push object out of raw data in dictionary
@@ -510,16 +531,28 @@ class PushBullet(PushTarget):
 
         :param dict pushargs: a dict of parameters to compose a push object
         '''
-        pushcls = {
-                'note': NotePush,
-                'list': ListPush,
-                'link': LinkPush,
-                'file': FilePush,
-                'address': AddressPush,
-                'mirror': MirrorPush,
-                'dismissal': DismissalPush,
-                }.get(self.get_type_by_args(pushargs), Push)
-        return pushcls(**pushargs).bind(self)
+        # identity transform
+        if isinstance(pushargs, Push):
+            return pushargs
+
+        # a set of arguments in a dictionary
+        if isinstance(pushargs, dict):
+            pushcls = {
+                    'note': NotePush,
+                    'list': ListPush,
+                    'link': LinkPush,
+                    'file': FilePush,
+                    'address': AddressPush,
+                    'mirror': MirrorPush,
+                    'dismissal': DismissalPush,
+                    }.get(self.get_type_by_args(pushargs), Push)
+            push = pushcls(**pushargs)
+
+        else:
+            # otherwise, apply a set of heuristics
+            push = self.get_push_by_class(pushargs)
+
+        return push.bind(self)
 
     def delete(self, _uri):
         '''
@@ -700,8 +733,8 @@ class PushBullet(PushTarget):
         :rtype: Push
         :returns: push just sent
         '''
-        if not push:
-            push = self.make_push(pushargs)
+        if not isinstance(push, Push):
+            push = self.make_push(push or pushargs)
 
         if target is None:
             target = self
