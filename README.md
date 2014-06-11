@@ -90,7 +90,7 @@ api.push(push, device)
 
 You can use shortcuts without explicit push or device object instantiation:
 
-```
+```python
 # to a device by a known device iden
 api.push(target='deviceiden', type='note', title='title', body='message')
 push.send('deviceiden')
@@ -193,7 +193,7 @@ it yourself, as it exists as a PushBullet service object.
 Or, if you really know what you are doing, and you know internal push iden, you can
 delete a push by it:
 
-```
+```python
 push = pb.Push(iden='pushiden')
 push.bind(api).delete()
 ```
