@@ -101,12 +101,26 @@ device.push(type='list', items=['celery', 'tomatos', 'milk'], title='Shopping li
 device.push(items=['celery', 'tomatos', 'milk'], title='Shopping list')  # the same works for `api.push()`
 ```
 
-And finally you can push to API object directly to push to all your available devices at once:
+You can push to API object directly to push to all your available devices at once:
 
 ```python
 api.push(push)
 api.push(file='/home/kstep/notes.txt')  # file push! (with file MIME type autodetection)
 ```
+
+And finally you can often push plain objects:
+
+```python
+device.push(file('/home/kstep/notes.txt'))  # file push!
+device.push(buffer('Note to self'), file_name='notes.txt')  # also a file push (with custom file name)
+device.push(['celery', 'tomatos'], title='Shopping list')  # list push
+device.push(xrange(10))  # also a list push!
+device.push('Hello, PushBullet!')  # note push
+device.push('http://example.com')  # guess what, it's a link push!
+device.push('mailto:hi@example.com', title='Example User')  # this is also a link push
+```
+
+Push type is determined by first positional argument class in all these cases.
 
 ## Reading push history
 
