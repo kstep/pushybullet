@@ -7,7 +7,9 @@ arch=('any')
 url="http://github.com/kstep/pushybullet"
 license=('GPL')
 depends=('python2' 'python2-requests')
-optdepends=('python2-websocket-client: read pushes stream in real-time')
+optdepends=('python2-websocket-client: read pushes stream in real-time'
+            'python2-dateutil: parse datetime in string format'
+            'python2-magic: file type autodetection')
 source=(pushybullet.py pb setup.py)
 md5sums=('SKIP' 'SKIP' 'SKIP')
 
