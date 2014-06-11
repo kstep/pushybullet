@@ -633,9 +633,10 @@ class PushBullet(PushTarget):
         to be correct unix timestamp (number of seconds since 1/1/1970 00:00:00 UTC).
         If it is an integer and negative, it is a number of seconds in the past
         (e.g. use `-86400` to fetch pushes for the last day).
-        If it is a date or datetime object, it is, well, a date/time =)
+        If it is a date or datetime object, it is, well, a date/time =).
         If it is a timedelta object, it is a time-span in the past
         (so `timedelta(days=7)` means "pushes for the last week").
+        If it is a string, it is parsed with dateutil.parser.parse() for datetime object.
 
         :param since: minimal time for pushes to fetch
         :type since: int|long|date|datetime|timedelta
@@ -646,8 +647,14 @@ class PushBullet(PushTarget):
             since = since.strftime('%s')
         elif isinstance(since, datetime.timedelta):
             since = (datetime.datetime.now() - since).strftime('%s')
-        elif since < 0:
-            since = time.time() + since
+        else:
+            try:
+                since = int(since)
+                if since < 0:
+                    since += time.time()
+            except ValueError:
+                from dateutil.parser import parse
+                since = parse(since).strftime('%s')
 
         pushes = self.get('pushes', modified_after=since)
 
