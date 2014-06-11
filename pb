@@ -57,7 +57,7 @@ def get_parser():
     contacts_group = subparsers.add_parser('contacts', help='list all contacts')
 
     pushes_group = subparsers.add_parser('pushes', help='list all pushes')
-    pushes_group.add_argument('--since', help='show pushes since this timestamp', type=int, default=0)
+    pushes_group.add_argument('--since', help='show pushes since this timestamp', type=str, default='')
     pushes_group.add_argument('--with-empty', help='include empty pushes', action='store_false', dest='skip_empty', default=True)
 
     watch_group = subparsers.add_parser('watch', help='watch for events')
