@@ -1,6 +1,6 @@
 # Maintainer: Konstantin Stepanov <me@kstep.me>
 pkgname="python2-pushybullet"
-pkgver="1.2.2"
+pkgver="1.2.3"
 pkgrel=1
 pkgdesc="PushBullet APIv2 python bindings"
 arch=('any')
