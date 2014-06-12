@@ -10,6 +10,7 @@ PKGBUILD: PKGBUILD.in
 	makepkg -g >> PKGBUILD
 
 clean:
-	rm -f PKGBUILD *.tar.gz *.tar.xz *.pyc *.pyo
+	rm -f PKGBUILD MANIFEST *.tar.gz *.tar.xz *.pyc *.pyo
+	rm -rf build pkg src dist
 
 .PHONY: aur pkg clean
