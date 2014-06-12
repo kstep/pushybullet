@@ -1,6 +1,7 @@
 # -*- encoding: utf-8 -*-
 from requests import session
 from os.path import basename
+from os import fdopen
 from StringIO import StringIO
 import datetime
 import json
@@ -379,7 +380,9 @@ class FilePush(Push):
         own risk, but bear in mind it's an internal implementation detail, so please make sure you
         a) understand what you are doing, b) don't abuse the feature.
 
-        If you specify `file` only, it must be either a file object or a string with absolute file path.
+        If you specify `file` only, it must be either a file-like object, a file-handler opened for read,
+        a buffer (for in-memory files), an openable object (the one with `open([mode])` method)
+        or a string with absolute file path.
         You will see basename of the file (the part of path after final slash).
 
         If you specify both `file` and `file_name`, a push receiver will see `file_name` value
@@ -393,7 +396,8 @@ class FilePush(Push):
         to the beginning, so it won't work for non-seekable streams, so if you are about to push
         something like `sys.stdin`, make sure you set `file_type` manually.
 
-        :param file|str file: file to push
+        :param file: file to push
+        :type file: str, file, buffer, int, Path or any file-like or openable object
         :param str file_name: file name to push (will be visible to reciever)
         :param str file_type: file's MIME type (will be determined by file's content if omitted)
         :param str body: optional message to accompany file
@@ -409,7 +413,11 @@ class FilePush(Push):
             target = self.api.make_target(target)
 
         if not self.file_url:  # file not uploaded yet
-            fh = self.file if isinstance(self.file, file) else open(self.file, 'rb')
+            fh = (self.file if hasattr(self.file, 'read') else  # file-like object
+                  self.file.open('rb') if hasattr(self.file, 'open') else  # openable object
+                  fdopen(self.file, 'rb') if isinstance(self.file, int) else  # file descriptor
+                  StringIO(self.file) if isinstance(self.file, buffer) else  # in-memory file
+                  open(self.file, 'rb'))  # file name
 
             try:
                 file_name = str(self.file_name) if self.file_name else basename(fh.name)
@@ -489,14 +497,12 @@ class PushBullet(PushTarget):
                      'note')
 
     def get_push_by_class(self, arg, args={}):
-        if isinstance(arg, file):
+        if isinstance(arg, (file, buffer)):
             return FilePush(arg, **args)
-        elif isinstance(arg, buffer):
-            return FilePush(StringIO(arg), **args)
 
         # any iteratable (except for strings) is a list push
         elif hasattr(arg, '__iter__') and not isinstance(arg, (str, unicode)):
-            return ListPush(list(arg), **args)
+            return ListPush(arg, **args)
 
         # default is a note push
         else:
