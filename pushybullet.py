@@ -275,7 +275,7 @@ class NotePush(Push):
         :type body: str
         :type title: str
         '''
-        self.title, self.body = title, body
+        self.title, self.body = str(title), str(body)
         Push.__init__(self, **data)
 
     @property
@@ -301,7 +301,7 @@ class LinkPush(Push):
         :type title: str
         :type body: str
         '''
-        self.title, self.url, self.body = title, url, body
+        self.title, self.url, self.body = str(title), str(url), str(body)
         Push.__init__(self, **data)
 
     @property
@@ -326,7 +326,7 @@ class AddressPush(Push):
         :type address: str
         :type name: str
         '''
-        self.name, self.address = name, address
+        self.name, self.address = str(name), str(address)
         Push.__init__(self, **data)
 
     @property
@@ -351,7 +351,7 @@ class ListPush(Push):
         :type items: list of str
         :type title: str
         '''
-        self.title, self.items = title, list(items)
+        self.title, self.items = str(title), map(str, items)
         Push.__init__(self, **data)
 
     @property
@@ -403,9 +403,12 @@ class FilePush(Push):
         :param str body: optional message to accompany file
         '''
         assert(file or file_name)
-        self.file, self.file_name, self.file_type = file or file_name, file_name, file_type
+        self.file, self.file_name, self.file_type = file, str(file_name), str(file_type)
+        if not self.file:
+            self.file = self.file_name
+
         self.file_url = None
-        self.body = body
+        self.body = str(body)
         Push.__init__(self, **data)
 
     def send(self, target=None):
