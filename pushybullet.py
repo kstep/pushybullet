@@ -489,30 +489,28 @@ class PushBullet(PushTarget):
         self.sess = session()
         self.sess.auth = (apikey, '')
 
-    def get_type_by_args(self, args):
+    def get_type_by_args(self, args, arg=None):
         return args.get('type') or ('url' if 'url' in args else
                      'list' if 'items' in args else
                      'address' if 'address' in args else
                      'file' if 'file' in args or 'file_name' in args else
+                     self.get_type_by_class(arg) if arg else
                      'note')
 
-    def get_push_by_class(self, arg, args={}):
+    def get_type_by_class(self, arg):
         if isinstance(arg, (file, buffer)):
-            return FilePush(arg, **args)
+            return 'file'
 
         # any iteratable (except for strings) is a list push
-        elif hasattr(arg, '__iter__') and not isinstance(arg, (str, unicode)):
-            return ListPush(arg, **args)
+        if hasattr(arg, '__iter__') and not isinstance(arg, (str, unicode)):
+            return 'list'
+
+        # special case: looks like url, therefore it is an link push
+        if str(arg).startswith(('http://', 'https://', 'ftp://', 'ftps://', 'mailto:')):
+            return 'link'
 
         # default is a note push
-        else:
-            arg = str(arg)
-
-            # special case: looks like url, therefore it is an link push
-            if arg.startswith(('http://', 'https://', 'ftp://', 'ftps://', 'mailto:')):
-                return LinkPush(arg, **args)
-
-            return NotePush(arg, **args)
+        return 'note'
 
     def make_push(self, pushargs, pusharg=None):
         '''
@@ -535,21 +533,16 @@ class PushBullet(PushTarget):
         :param dict pushargs: a dict of parameters to compose a push object
         '''
         # a set of arguments in a dictionary
-        if not pusharg:
-            pushcls = {
-                    'note': NotePush,
-                    'list': ListPush,
-                    'link': LinkPush,
-                    'file': FilePush,
-                    'address': AddressPush,
-                    'mirror': MirrorPush,
-                    'dismissal': DismissalPush,
-                    }.get(self.get_type_by_args(pushargs), Push)
-            push = pushcls(**pushargs)
-
-        else:
-            # otherwise, apply a set of heuristics
-            push = self.get_push_by_class(pusharg, pushargs)
+        pushcls = {
+                'note': NotePush,
+                'list': ListPush,
+                'link': LinkPush,
+                'file': FilePush,
+                'address': AddressPush,
+                'mirror': MirrorPush,
+                'dismissal': DismissalPush,
+                }.get(self.get_type_by_args(pushargs, pusharg), Push)
+        push = pushcls(pusharg, **pushargs) if pusharg else pushcls(**pushargs)
 
         return push.bind(self)
 
