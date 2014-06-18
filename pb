@@ -70,7 +70,7 @@ def get_parser():
 def command_devices(api, args):
     devices = api.devices()
     for device in devices:
-        print(device.iden, '%s %s' % (device.manufacturer, device.model))
+        print(device.iden, str(device))
 
 def command_pushes(api, args):
     pushes = api.pushes(since=args['since'], skip_empty=args['skip_empty'])

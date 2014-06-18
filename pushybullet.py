@@ -590,13 +590,16 @@ class PushBullet(PushTarget):
         '''
         response = self.sess.post(_uri, data=data, files=files, auth=()).raise_for_status()
 
-    __devices = None
-    def devices(self, reset_cache=False):
+    def devices(self, reset_cache=False, skip_inactive=True):
         '''
         Get available devices to push to
 
         :param bool reset_cache: if True, reset internal devices cache and force HTTP request
         '''
+
+        return self.paged('devices',
+                lambda d: skip_inactive and not d['active']
+
         if not reset_cache and self.__devices:
             return self.__devices
 
@@ -684,19 +687,24 @@ class PushBullet(PushTarget):
                 from dateutil.parser import parse
                 since = parse(since).strftime('%s')
 
-        pushes = self.get('pushes', modified_after=since)
+        return self.paged('pushes',
+                lambda p: not skip_empty or p.get('type'),
+                self.make_push,
+                modified_after=since)
+
+
+    def paged(self, _uri, _filter, _wrapper, **params):
+        page = self.get(_uri, **params)
 
         while True:
-            for push in pushes['pushes']:
-                if skip_empty and not push.get('type'):
-                    continue
+            for item in page[_uri]:
+                if _filter(item):
+                    yield _wrapper(item)
 
-                yield self.make_push(push)
-
-            if not pushes.get('cursor'):
+            if not page.get('cursor'):
                 break
 
-            pushes = self.get('pushes', cursor=pushes['cursor'])
+            page = self.get(_uri, cursor=page['cursor'])
 
     __me = None
     def me(self, reset_cache=False):
