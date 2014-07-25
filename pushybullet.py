@@ -165,6 +165,11 @@ class Contact(PushTarget):
             raise PushBulletError('contact does not exist yet')
 
         self.__dict__.update(self.api.post(self.uri, name=self.name)['contacts'][0])
+        return self
+
+    def rename(self, newname):
+        self.name = newname
+        return self.update()
 
 class Device(PushTarget):
     '''
@@ -215,6 +220,7 @@ class User(PushTarget):
 
     def update(self):
         self.__dict__.update(self.api.post(self.uri, preferences=getattr(self, 'preferences', {})))
+        return self
 
 # }}}
 
@@ -266,6 +272,20 @@ class Push(PushBulletObject):
             raise PushBulletError('push was not sent yet')
 
         self.send(self.target_device_iden)
+
+    def update(self):
+        self.__dict__.update(self.api.post(self.uri, dissmissed=getattr(self, 'dismissed', False))['pushes'][0])
+        return self
+
+    def dismiss(self):
+        '''
+        Dismiss a push
+        '''
+        if getattr(self, 'dismissed', False):
+            return  # don't dismiss twice
+
+        self.dismissed = True
+        return self.update()
 
     @property
     def data(self):
