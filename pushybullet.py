@@ -748,7 +748,7 @@ class PushBullet(PushTarget):
                 since = parse(since).strftime('%s')
 
         return self.paged('pushes',
-                lambda p: not skip_empty or p.get('type'),
+                (lambda p: bool(p.get('type'))) if skip_empty else (lambda p: True),
                 self.make_push,
                 modified_after=since)
 
