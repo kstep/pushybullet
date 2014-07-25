@@ -153,6 +153,18 @@ class Contact(PushTarget):
     def uri(self):
         return 'contacts/%s' % self.iden
 
+    def create(self):
+        if self.iden:
+            raise PushBulletError('contact already exists')
+
+        self.__dict__.update(self.api.post('contacts', name=self.name, email=self.email))
+        return self
+
+    def update(self):
+        if not self.iden:
+            raise PushBulletError('contact does not exist yet')
+
+        self.__dict__.update(self.api.post(self.uri, name=self.name)['contacts'][0])
 
 class Device(PushTarget):
     '''
@@ -183,6 +195,26 @@ class Device(PushTarget):
 
         self.__dict__.update(self.api.post('devices', nickname=self.nickname, type=getattr(self, 'type', 'stream')))
         return self
+
+class User(PushTarget):
+    '''
+    User profile
+    '''
+    def __repr__(self):
+        return '<User[%s]: %s <%s>>' % (self.iden,
+                getattr(self, 'name', 'Unnamed'),
+                getattr(self, 'email', None) or getattr(self, 'email_normalized'))
+
+    @property
+    def ident(self):
+        return {}
+
+    @property
+    def uri(self):
+        return 'users/me'
+
+    def update(self):
+        self.__dict__.update(self.api.post(self.uri, preferences=getattr(self, 'preferences', {})))
 
 # }}}
 
@@ -612,6 +644,15 @@ class PushBullet(PushTarget):
         '''
         return Device(self, None, nickname=nickname, type=type).create()
 
+    def create_contact(self, name, email):
+        '''
+        Create a new contact with given name and email
+
+        :param str name: contact's name
+        :param str email: contact's email
+        :rtype: Contact
+        '''
+        return Contact(self, None, name=name, email=email).create()
 
     def iter_contacts(self, skip_inactive=True):
         '''
@@ -733,7 +774,7 @@ class PushBullet(PushTarget):
         if not reset_cache and self.__me:
             return self.__me
 
-        self.__me = self.get('users/me')
+        self.__me = User(self, **self.get('users/me'))
         return self.__me
 
     def make_target(self, target):
