@@ -294,7 +294,7 @@ class NotePush(Push):
     Note push
     '''
     type = 'note'
-    def __init__(self, body, title='', **data):
+    def __init__(self, body='', title='', **data):
         '''
         A note push constructor
 
