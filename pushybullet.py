@@ -20,6 +20,9 @@ class Event(object):
     def __repr__(self):
         return '<%s @%s>' % (self.__class__.__name__, self.time)
 
+    def pushes(self, skip_empty=False):
+        return xrange(0)  # empty generator
+
 class NopEvent(Event):
     '''
     Nop event (keep-alive ticks)
@@ -53,6 +56,9 @@ class PushEvent(Event):
 
     def __repr__(self):
         return '<%s[%r] @%s>' % (self.__class__.__name__, self.push, self.time)
+
+    def pushes(self, skip_empty=False):
+        yield self.push
 
 # }}}
 
