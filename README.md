@@ -62,7 +62,14 @@ To get current account info use `api.me()` method:
 me = api.me()
 ```
 
-The method returns simple dictionary. It also caches result like `contacts()` and `devices()` methods, and like them it supports `reset_cache=True` parameter.
+The method returns user object. It also caches result like `contacts()` and `devices()` methods, and like them it supports `reset_cache=True` parameter.
+
+You can update your preferences:
+
+```python
+me.preferences['cat'] = '^_=_^'
+me.update()
+```
 
 ## Pushing
 
@@ -150,6 +157,16 @@ of pushes to read from.
 
 It also automatically skips deleted/empty pushes. Use `skip_empty=False` parameter to get them.
 
+And then, you can dismiss pushes with `push.dismiss()` call:
+
+```python
+push.dismiss()
+
+# or in a more verbose way:
+push.dismissed = True
+push.update()
+```
+
 ## Real-time events stream
 
 You can get real-time push events stream from websocket:
@@ -170,7 +187,7 @@ property.
 By default `api.stream()` method hides "nop" events from you, as they are just heartbeat keep-alive
 events. If you want to get them anyway, use `skip_nop=False` parameter.
 
-## Creating new devices
+## Creating new devices and contacts
 
 You can create new (stream) devices in two ways:
 
@@ -181,6 +198,24 @@ device = Device(api, None, nickname='My other stream device').create()
 ```
 
 Use whichever method you like.
+
+The same works for contacts as well:
+
+```python
+contact = api.create_contact('My friend', 'friend@example.com')
+
+contact = Contact(api, None, name='My friend', email='friend@example.com').create()
+```
+
+You can then rename your contacts:
+
+```python
+contact.name = 'Old friend'
+contact.update()
+
+# Or shorter variant:
+contact.rename('Old friend')
+```
 
 ## Deleting contacts and devices
 
