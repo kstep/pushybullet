@@ -179,10 +179,9 @@ for event in api.stream():
 Note, you may need to run the loop in some other (background) thread, as it's effectively infinite loop
 (until some exception, like network timeout, happens).
 
-You can get pushes, which produces an event, from event object itself. For `TickleEvent` object
-you can use `ev.pushes()` call with the same semantics as `api.pushes()` method above, except for `since`
-argument (it's already defined by event itself for you). For `PushEvent` object, just use `ev.push`
-property.
+You can get pushes, which produces an event, from event object itself. For any event you can get
+list of pushes with `ev.pushes()` call (always empty for Nop events, always yields single value for Push events).
+For `PushEvent` object, you can just use `ev.push` property.
 
 By default `api.stream()` method hides "nop" events from you, as they are just heartbeat keep-alive
 events. If you want to get them anyway, use `skip_nop=False` parameter.
