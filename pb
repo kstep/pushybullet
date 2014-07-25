@@ -90,12 +90,8 @@ def command_watch(api, args):
             print_event(event)
 
             if args['with_pushes']:
-                if isinstance(event, pushybullet.TickleEvent):
-                    for push in event.pushes(skip_empty=args['skip_empty']):
-                        print_push(push)
-
-                elif isinstance(event, pushybullet.PushEvent):
-                    print_push(event.push)
+                for push in event.pushes(skip_empty=args['skip_empty']):
+                    print_push(push)
 
     except KeyboardInterrupt:
         print('Watching stopped')
