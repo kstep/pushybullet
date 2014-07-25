@@ -590,21 +590,16 @@ class PushBullet(PushTarget):
         '''
         response = self.sess.post(_uri, data=data, files=files, auth=()).raise_for_status()
 
-    def devices(self, reset_cache=False, skip_inactive=True):
+    def iter_devices(self, skip_inactive=True):
         '''
         Get available devices to push to
 
-        :param bool reset_cache: if True, reset internal devices cache and force HTTP request
+        :param bool skip_inactive: if False, fetch all devices, even inactive ones
         '''
 
         return self.paged('devices',
-                lambda d: skip_inactive and not d['active']
-
-        if not reset_cache and self.__devices:
-            return self.__devices
-
-        self.__devices = map(lambda d: Device(self, **d), self.get('devices')['devices'])
-        return self.__devices
+                (lambda d: d['active']) if skip_inactive else (lambda d: True),
+                lambda d: Device(self, **d))
 
 
     def create_device(self, nickname, type='stream'):
@@ -618,18 +613,42 @@ class PushBullet(PushTarget):
         return Device(self, None, nickname=nickname, type=type).create()
 
 
-    __contacts = None
-    def contacts(self, reset_cache=False):
+    def iter_contacts(self, skip_inactive=True):
         '''
         Get available contacts to push to
 
-        :param bool reset_cache: if True, reset internal devices cache and force HTTP request
+        :param bool skip_inactive: if False, fetch all contacts, even inactive ones
         '''
-        if not reset_cache and self.__contacts:
-            return self.__contacts
+        return self.paged('contacts',
+                (lambda c: c['active']) if skip_inactive else (lambda c: True),
+                lambda c: Contact(self, **c))
 
-        self.__contacts = map(lambda c: Contact(self, **c), self.get('contacts')['contacts'])
+
+    __contacts = None
+    def contacts(self, reset_cache=False):
+        '''
+        Get available contacts to push to as a plain list
+
+        :param bool reset_cache: if True, reset inner contacts cache
+        '''
+        if reset_cache or self.__contacts is None:
+            self.__contacts = list(self.iter_contacts())
+
         return self.__contacts
+
+
+    __devices = None
+    def devices(self, reset_cache=False):
+        '''
+        Get available devices to push to as a plain list
+
+        :param bool reset_cache: if True, reset inner devices cache
+        '''
+        if reset_cache or self.__devices is None:
+            self.__devices = list(self.iter_devices())
+
+        return self.__devices
+
 
     def __getitem__(self, device_iden):
         '''
