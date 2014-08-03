@@ -180,8 +180,17 @@ Note, you may need to run the loop in some other (background) thread, as it's ef
 (until some exception, like network timeout, happens).
 
 You can get pushes, which produces an event, from event object itself. For any event you can get
-list of pushes with `ev.pushes()` call (always empty for Nop events, always yields single value for Push events).
-For `PushEvent` object, you can just use `ev.push` property.
+list of pushes with `event.pushes()` call (always empty for Nop events, always yields single value for Push events).
+For `PushEvent` object, you can just use `event.push` property.
+
+```python
+for event in api.stream():
+    for push in event.pushes():
+        print(push.title)
+        # or for push events:
+        # if isinstance(push, PushEvent):
+        #     print(event.push.title)
+```
 
 By default `api.stream()` method hides "nop" events from you, as they are just heartbeat keep-alive
 events. If you want to get them anyway, use `skip_nop=False` parameter.
