@@ -892,7 +892,7 @@ class PushBullet(PushTarget):
         '''
         return self
 
-    def stream(self, skip_nop=True):
+    def stream(self, skip_nop=True, use_server_time=False):
         '''
         Generator to listen for events on websocket and yield them
 
@@ -906,6 +906,7 @@ class PushBullet(PushTarget):
         in some other (background) thread.
 
         :param bool skip_nop: skip "nop" events (used as keep-alive heartbeats only), default is True
+        :param bool use_server_time: use server time to track last push to fetch (requires additional request on event), default is False
         :rtype: generator
         '''
         from websocket import create_connection
@@ -922,7 +923,16 @@ class PushBullet(PushTarget):
                      TickleEvent(self, event['subtype'], since=last_ts) if evtype == 'tickle' else
                      PushEvent(self, self.make_push(event['push'])) if evtype == 'push' else
                      None)
-            last_ts = time.time()
+
+            if use_server_time:
+                try:
+                    last_ts = event.pushes(limit=1).next().created
+                except StopIteration:
+                    last_ts = time.time()
+
+            else:
+                last_ts = time.time()
+
             if event:
                 yield event
 
