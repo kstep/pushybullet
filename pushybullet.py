@@ -26,6 +26,12 @@ class Event(object):
     def pushes(self, skip_empty=False, limit=None):
         return xrange(0)  # empty generator
 
+    def latest_push_time(self):
+        try:
+            return self.pushes(limit=1).next().created
+        except (StopIteration, AttributeError):
+            return None
+
 class NopEvent(Event):
     '''
     Nop event (keep-alive ticks)
@@ -892,7 +898,7 @@ class PushBullet(PushTarget):
         '''
         return self
 
-    def stream(self, skip_nop=True, use_server_time=False):
+    def stream(self, skip_nop=True, use_server_time=False, throttle=1):
         '''
         Generator to listen for events on websocket and yield them
 
@@ -911,7 +917,7 @@ class PushBullet(PushTarget):
         '''
         from websocket import create_connection
         conn = create_connection('wss://stream.pushbullet.com/websocket/%s' % self.apikey)
-        last_ts = time.time()
+        last_ts = ((self.latest_push_time() or time.time()) if use_server_time else time.time()) + throttle
 
         while True:
             event = json.loads(conn.recv())
@@ -924,17 +930,16 @@ class PushBullet(PushTarget):
                      PushEvent(self, self.make_push(event['push'])) if evtype == 'push' else
                      None)
 
-            if use_server_time:
-                try:
-                    last_ts = event.pushes(limit=1).next().created
-                except StopIteration:
-                    last_ts = time.time()
-
-            else:
-                last_ts = time.time()
+            last_ts = ((event.latest_push_time() or time.time()) if use_server_time else time.time()) + throttle
 
             if event:
                 yield event
+
+    def latest_push_time(self):
+        try:
+            return self.pushes(limit=1).next().created
+        except StopIteration:
+            return None
 
     def __unicode__(self):
         return u'<PushBullet>'
