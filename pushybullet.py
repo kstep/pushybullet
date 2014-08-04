@@ -104,6 +104,9 @@ class PushBulletObject(object):
         '''
         return bool(getattr(self, 'api', None))
 
+    def get(self, name, default=None):
+        return getattr(self, name, default)
+
 # Push targets {{{
 
 class PushTarget(PushBulletObject):
