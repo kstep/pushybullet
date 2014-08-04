@@ -215,14 +215,17 @@ contact = api.create_contact('My friend', 'friend@example.com')
 contact = Contact(api, None, name='My friend', email='friend@example.com').create()
 ```
 
-You can then rename your contacts:
+You can then rename your contacts and devices:
 
 ```python
 contact.name = 'Old friend'
 contact.update()
 
+device.name = 'Cool stream device'
+
 # Or shorter variant:
 contact.rename('Old friend')
+device.rename('Cool stream device')
 ```
 
 ## Deleting contacts and devices

@@ -210,6 +210,17 @@ class Device(PushTarget):
         self.__dict__.update(self.api.post('devices', nickname=self.nickname, type=getattr(self, 'type', 'stream')))
         return self
 
+    def update(self):
+        if not self.iden:
+            raise PushBulletError('device does not exist yet')
+
+        self.__dict__.update(self.api.post(self.uri, nickname=self.nickname))
+        return self
+
+    def rename(self, newname):
+        self.nickname = newname
+        return self.update()
+
 class User(PushTarget):
     '''
     User profile
