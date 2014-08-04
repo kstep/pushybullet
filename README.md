@@ -203,6 +203,35 @@ for event in api.stream():
 By default `api.stream()` method hides "nop" events from you, as they are just heartbeat keep-alive
 events. If you want to get them anyway, use `skip_nop=False` parameter.
 
+Also `event.pushes()` doesn't hide empty (deleted, inactive) pushes from you by default, so you don't
+miss deleted/dismissed push events. If you only look for new active pushes,
+use `event.pushes(skip_empty=False)` instead.
+
+### Timing considerations
+
+In order to provide pushes since last event occurrence, the tickle event object must know last event
+occurrence time. This is achieved by tracking last event received time internally by `api.stream()` event,
+which shouldn't bother you as a user.
+
+Except for one problem. Everything works fine, until your local clock works in sync with PushBullet
+server clock, but if any skew appears, you will either get push duplicates or missing pushes
+(depends on whether your clock runs before or after server clock) from `event.pushes()` method result.
+This is bad. The only method to circumvent this behavior, is use PushBullet server time to track
+timings in `api.stream()` (and this is the way approved by PushBullet themselves).
+
+But this approach brings another problem: in order to get PushBullet time of last push, one must make
+real HTTP request to PushBullet. That is, every time tickle event is received, we must make another
+HTTP request just to receive server time. This can be a performance killer, and that's why this is not
+the default behavior of `api.stream()` method.
+
+To make compromise, `api.stream()` method uses system local clock to track event times to keep things
+fast enough, and if you have any issues with this default behavior, you can set `use_server_time=True`
+parameter to fix things, but be ready the whole thing will run a little slower, as additional
+HTTP queries will be done to PushBullet servers.
+
+**TL;DR:** if you call `event.pushes()` and get pushes missing or duplicated,
+use `api.stream(use_server_time=True)`.
+
 ## Creating new devices and contacts
 
 You can create new (stream) devices in two ways:
