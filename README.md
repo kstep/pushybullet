@@ -10,8 +10,10 @@ Features:
 * watch for new push events in realtime,
 * send any kind of pushes in a number of convienient ways,
 * delete devices, contacts and pushes,
+* rename devices and contacts, dismiss pushes,
 * create new (stream) devices,
-* get info about current user.
+* get info about current user,
+* update user preferences.
 
 ## Initialization
 
