@@ -8,21 +8,8 @@ import time
 import sys
 import os
 
-try:
-    from ConfigParser import SafeConfigParser as ConfigParser
-except ImportError:
-    from configparser import SafeConfigParser as ConfigParser
-
-def get_apikey_from_config():
-    try:
-        config = ConfigParser()
-        config.read(os.path.expanduser('~/.config/pushbullet/config.ini'))
-        return config.get('pushbullet', 'apikey')
-    except:
-        return None
-
 def get_parser():
-    apikey = get_apikey_from_config()
+    apikey = pushybullet.get_apikey_from_config()
     parser = argparse.ArgumentParser(description='PushBullet command line client')
     parser.add_argument('--apikey', help='API key (get from https://www.pushbullet.com/account)', type=str,
             default=apikey, required=not apikey)

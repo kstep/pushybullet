@@ -1,11 +1,24 @@
 # -*- encoding: utf-8 -*-
 from requests import session
-from os.path import basename
+from os.path import basename, expanduser
 from os import fdopen
 from StringIO import StringIO
 import datetime
 import json
 import time
+
+def get_apikey_from_config():
+    try:
+        from ConfigParser import SafeConfigParser as ConfigParser
+    except ImportError:
+        from configparser import SafeConfigParser as ConfigParser
+
+    try:
+        config = ConfigParser()
+        config.read(expanduser('~/.config/pushbullet/config.ini'))
+        return config.get('pushbullet', 'apikey')
+    except:
+        return None
 
 def utf8(s):
     return s if isinstance(s, unicode) else unicode(s, 'utf-8')
