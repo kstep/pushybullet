@@ -28,7 +28,8 @@ class Event(object):
 
     def latest_push_time(self):
         try:
-            return self.pushes(limit=1).next().created
+            push = self.pushes(limit=1).next()
+            return push.get('modified') or push.get('created')
         except (StopIteration, AttributeError):
             return None
 
@@ -937,7 +938,8 @@ class PushBullet(PushTarget):
 
     def latest_push_time(self):
         try:
-            return self.pushes(limit=1).next().created
+            push = self.pushes(limit=1).next()
+            return push.get('modified') or push.get('created')
         except StopIteration:
             return None
 
