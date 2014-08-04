@@ -173,7 +173,7 @@ class Contact(PushTarget):
         if not self.iden:
             raise PushBulletError('contact does not exist yet')
 
-        self.__dict__.update(self.api.post(self.uri, name=self.name)['contacts'][0])
+        self.__dict__.update(self.api.post(self.uri, name=self.name))
         return self
 
     def rename(self, newname):
@@ -294,7 +294,7 @@ class Push(PushBulletObject):
         self.send(self.target_device_iden)
 
     def update(self):
-        self.__dict__.update(self.api.post(self.uri, dissmissed=getattr(self, 'dismissed', False))['pushes'][0])
+        self.__dict__.update(self.api.post(self.uri, dissmissed=getattr(self, 'dismissed', False)))
         return self
 
     def dismiss(self):
