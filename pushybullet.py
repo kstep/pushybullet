@@ -7,6 +7,9 @@ import datetime
 import json
 import time
 
+def utf8(s):
+    return s if isinstance(s, unicode) else unicode(s, 'utf-8')
+
 # Events {{{
 class Event(object):
     '''
@@ -136,8 +139,8 @@ class PushTarget(PushBulletObject):
         push.send(self)
         return push
 
-    def __unicode__(self):
-        return unicode(str(self), 'utf-8')
+    def __str__(self):
+        return unicode(self).encode('utf8')
 
 class Contact(PushTarget):
     '''
@@ -148,8 +151,8 @@ class Contact(PushTarget):
                 getattr(self, 'name', 'Unnamed'),
                 getattr(self, 'email', None) or getattr(self, 'email_normalized'))
 
-    def __str__(self):
-        return '%s <%s>' % (self.name, self.email)
+    def __unicode__(self):
+        return u'%s <%s>' % (self.name, self.email)
 
     @property
     def ident(self):
@@ -187,7 +190,7 @@ class Device(PushTarget):
                 getattr(self, 'model', None) or
                 'Unnamed')
 
-    def __str__(self):
+    def __unicode__(self):
         return (getattr(self, 'nickname', None) or
                 getattr(self, 'model', None) or
                 self.iden)
@@ -269,7 +272,7 @@ class Push(PushBulletObject):
 
         result = self.api.post('pushes', **data)
         self.__dict__.update(result)
-        
+
     def resend(self):
         '''
         Try to send the push to the same target again (e.g. as a part of error handling logic)
@@ -306,10 +309,10 @@ class Push(PushBulletObject):
         return isinstance(other, Push) and self.iden == other.iden
 
     def __repr__(self):
-        return '<%s[%s]: %s>' % (self.__class__.__name__, getattr(self, 'iden', None), str(self))
+        return u'<%s[%s]: %s>' % (self.__class__.__name__, getattr(self, 'iden', None), unicode(self))
 
-    def __str__(self):
-        return '%s push' % getattr(self, 'type', 'general')
+    def __unicode__(self):
+        return u'%s push' % getattr(self, 'type', 'general')
 
     @property
     def uri(self):
@@ -333,14 +336,14 @@ class NotePush(Push):
         :type body: str
         :type title: str
         '''
-        self.title, self.body = str(title), str(body)
+        self.title, self.body = utf8(title), utf8(body)
         Push.__init__(self, **data)
 
     @property
     def data(self):
         return {'title': self.title, 'body': self.body}
 
-    def __str__(self):
+    def __unicode__(self):
         return self.title
 
 class LinkPush(Push):
@@ -359,14 +362,14 @@ class LinkPush(Push):
         :type title: str
         :type body: str
         '''
-        self.title, self.url, self.body = str(title), str(url), str(body)
+        self.title, self.url, self.body = utf8(title), utf8(url), utf8(body)
         Push.__init__(self, **data)
 
     @property
     def data(self):
         return {'title': self.title, 'url': self.url, 'body': self.body}
 
-    def __str__(self):
+    def __unicode__(self):
         return self.url
 
 class AddressPush(Push):
@@ -384,15 +387,15 @@ class AddressPush(Push):
         :type address: str
         :type name: str
         '''
-        self.name, self.address = str(name), str(address)
+        self.name, self.address = utf8(name), utf8(address)
         Push.__init__(self, **data)
 
     @property
     def data(self):
         return {'name': self.name, 'address': self.address}
 
-    def __str__(self):
-        return '%s (%s)' % (self.name, self.address)
+    def __unicode__(self):
+        return u'%s (%s)' % (self.name, self.address)
 
 class ListPush(Push):
     '''
@@ -409,15 +412,15 @@ class ListPush(Push):
         :type items: list of str
         :type title: str
         '''
-        self.title, self.items = str(title), map(str, items)
+        self.title, self.items = utf8(title), map(utf8, items)
         Push.__init__(self, **data)
 
     @property
     def data(self):
         return {'title': self.title, 'items': self.items}
 
-    def __str__(self):
-        return '%s (%d)' % (self.title, len(self.items))
+    def __unicode__(self):
+        return u'%s (%d)' % (self.title, len(self.items))
 
 class FilePush(Push):
     '''
@@ -461,12 +464,12 @@ class FilePush(Push):
         :param str body: optional message to accompany file
         '''
         assert(file or file_name)
-        self.file, self.file_name, self.file_type = file, str(file_name), str(file_type)
+        self.file, self.file_name, self.file_type = file, utf8(file_name), utf8(file_type)
         if not self.file:
             self.file = self.file_name
 
         self.file_url = None
-        self.body = str(body)
+        self.body = utf8(body)
         Push.__init__(self, **data)
 
     def send(self, target=None):
@@ -481,8 +484,8 @@ class FilePush(Push):
                   open(self.file, 'rb'))  # file name
 
             try:
-                file_name = str(self.file_name) if self.file_name else basename(fh.name)
-                file_type = str(self.file_type) if self.file_type else self.guess_type(fh)
+                file_name = utf8(self.file_name) if self.file_name else basename(fh.name)
+                file_type = utf8(self.file_type) if self.file_type else self.guess_type(fh)
                 req = target.api.get('upload-request', file_name=file_name, file_type=file_type)
                 target.api.upload(req['upload_url'], data=req['data'], file=fh)
                 self.file_name, self.file_type, self.file_url = req['file_name'], req['file_type'], req['file_url']
@@ -491,7 +494,7 @@ class FilePush(Push):
                 fh.close()
 
         Push.send(self, target)
-        
+
     def guess_type(self, file):
         try:
             import magic
@@ -508,7 +511,7 @@ class FilePush(Push):
     def data(self):
         return {'file_name': self.file_name, 'file_type': self.file_type, 'file_url': self.file_url, 'body': self.body}
 
-    def __str__(self):
+    def __unicode__(self):
         return self.file_name
 
 class MirrorPush(Push):
@@ -567,7 +570,7 @@ class PushBullet(PushTarget):
             return 'list'
 
         # special case: looks like url, therefore it is an link push
-        if str(arg).startswith(('http://', 'https://', 'ftp://', 'ftps://', 'mailto:')):
+        if utf8(arg).startswith(('http://', 'https://', 'ftp://', 'ftps://', 'mailto:')):
             return 'link'
 
         # default is a note push
@@ -735,7 +738,7 @@ class PushBullet(PushTarget):
             return next(d for d in self.devices() if d.iden == device_iden)
         except StopIteration:
             try:
-                return next(d for d in self.devices() if str(d) == device_iden)
+                return next(d for d in self.devices() if utf8(d) == device_iden)
             except StopIteration:
                 raise KeyError(device_iden)
 
@@ -810,7 +813,7 @@ class PushBullet(PushTarget):
         if isinstance(target, PushTarget):
             return target
 
-        target = str(target)
+        target = utf8(target)
         return (Device(self, target) if '@' not in target else
                 Contact(self, None, email_normalized=target))
 
@@ -897,8 +900,8 @@ class PushBullet(PushTarget):
             if event:
                 yield event
 
-    def __str__(self):
-        return '<PushBullet>'
+    def __unicode__(self):
+        return u'<PushBullet>'
 
 # }}}
 
