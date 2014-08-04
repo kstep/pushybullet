@@ -109,10 +109,10 @@ You can use shortcuts without explicit push or device object instantiation:
 # to a device by a known device iden
 api.push(target='deviceiden', type='note', title='title', body='message')
 api.push(push, 'deviceiden')
-push.send('deviceiden')
+push.bind(api).send('deviceiden')
 
 # you can also push to your contacts
-push.send('me@friend.com')
+push.bind(api).send('me@friend.com')
 
 # to a device with push arguments:
 device.push(type='list', items=['celery', 'tomatos', 'milk'], title='Shopping list')
@@ -144,6 +144,11 @@ Push type is determined by first positional argument class in all these cases.
 As a rule of a thumb, you can use a string instead of push target in which case it will be accepted either as device iden
 or contact email (if the string contains at-sign (`@`)); and you can use simple object and/or a set of keyword arguments
 in all cases where you usually need to use push object.
+
+Also note, if you use plain string as a push target, don't forget to call `push.bind(api)` before pushing to let
+push object know which API should it use. This step can be skipped if the push was already pushed before,
+bound to an API with `push.bind(api)` call or fetched from API with `api.pushes()` or `event.pushes()` (see below).
+For more on push binding, see "[Deleting pushes](#deleting-pushes)".
 
 ## Reading push history
 
