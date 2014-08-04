@@ -54,6 +54,11 @@ so if you want to get really fresh (non cached) data, use `reset_cache=True` arg
 devices = api.devices(reset_cache=True)  # ignore cache!
 ```
 
+Also you can use `api.iter_devices()` and `api.iter_contacts()` methods to iterate over devices
+and contacts lazily. Unlike `api.devices()`/`api.contacts()`, these methods provide generators instead
+of lists, never cache data, request more data pages from PushBullet lazily as needed,
+and support `skip_inactive=False` flag to get inactive (deleted) devices and contacts.
+
 ## Getting current account info
 
 To get current account info use `api.me()` method:
