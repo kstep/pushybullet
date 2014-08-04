@@ -23,7 +23,7 @@ class Event(object):
     def __repr__(self):
         return '<%s @%s>' % (self.__class__.__name__, self.time)
 
-    def pushes(self, skip_empty=False):
+    def pushes(self, skip_empty=False, limit=None):
         return xrange(0)  # empty generator
 
 class NopEvent(Event):
@@ -42,8 +42,8 @@ class TickleEvent(Event):
         self.subtype = subtype
         self.since = since
 
-    def pushes(self, skip_empty=False):
-        return self.api.pushes(since=self.since, skip_empty=skip_empty)
+    def pushes(self, skip_empty=False, limit=None):
+        return self.api.pushes(since=self.since, skip_empty=skip_empty, limit=limit)
 
     def __repr__(self):
         return '<%s[%s] @%s>' % (self.__class__.__name__, self.subtype, self.time)
@@ -60,7 +60,7 @@ class PushEvent(Event):
     def __repr__(self):
         return '<%s[%r] @%s>' % (self.__class__.__name__, self.push, self.time)
 
-    def pushes(self, skip_empty=False):
+    def pushes(self, skip_empty=False, limit=None):
         yield self.push
 
 # }}}
@@ -670,7 +670,7 @@ class PushBullet(PushTarget):
         '''
         response = self.sess.post(_uri, data=data, files=files, auth=()).raise_for_status()
 
-    def iter_devices(self, skip_inactive=True):
+    def iter_devices(self, skip_inactive=True, limit=None):
         '''
         Get available devices to push to
 
@@ -679,7 +679,8 @@ class PushBullet(PushTarget):
 
         return self.paged('devices',
                 (lambda d: d['active']) if skip_inactive else (lambda d: True),
-                lambda d: Device(self, **d))
+                lambda d: Device(self, **d),
+                limit=limit)
 
 
     def create_device(self, nickname, type='stream'):
@@ -702,7 +703,7 @@ class PushBullet(PushTarget):
         '''
         return Contact(self, None, name=name, email=email).create()
 
-    def iter_contacts(self, skip_inactive=True):
+    def iter_contacts(self, skip_inactive=True, limit=None):
         '''
         Get available contacts to push to
 
@@ -710,7 +711,8 @@ class PushBullet(PushTarget):
         '''
         return self.paged('contacts',
                 (lambda c: c['active']) if skip_inactive else (lambda c: True),
-                lambda c: Contact(self, **c))
+                lambda c: Contact(self, **c),
+                limit=None)
 
 
     __contacts = None
@@ -761,7 +763,7 @@ class PushBullet(PushTarget):
             except StopIteration:
                 raise KeyError(device_iden)
 
-    def pushes(self, since=0, skip_empty=True):
+    def pushes(self, since=0, skip_empty=True, limit=None):
         '''
         Generator fetches and yields all pushes since given timestamp
 
@@ -780,6 +782,7 @@ class PushBullet(PushTarget):
         :param since: minimal time for pushes to fetch
         :type since: int|long|date|datetime|timedelta
         :param bool skip_empty: skip empty (inactive, removed) pushes, default is True
+        :param int limit: limit number of items per page
         :rtype: generator
         '''
         if isinstance(since, datetime.date):
@@ -798,7 +801,8 @@ class PushBullet(PushTarget):
         return self.paged('pushes',
                 (lambda p: bool(p.get('type'))) if skip_empty else (lambda p: True),
                 self.make_push,
-                modified_after=since)
+                modified_after=since,
+                limit=limit)
 
 
     def paged(self, _uri, _filter, _wrapper, **params):
