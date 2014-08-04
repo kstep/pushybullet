@@ -242,6 +242,14 @@ class User(PushTarget):
         self.__dict__.update(self.api.post(self.uri, preferences=getattr(self, 'preferences', {})))
         return self
 
+    def set_prefs(self, **prefs):
+        try:
+            self.preferences.update(prefs)
+        except AttributeError:
+            self.prefereces = prefs
+
+        return self.update()
+
 # }}}
 
 # Pushes {{{

@@ -74,6 +74,9 @@ You can update your preferences:
 ```python
 me.preferences['cat'] = '^_=_^'
 me.update()
+
+# or shorter version:
+me.set_prefs(cat='^_=_^')
 ```
 
 ## Pushing
