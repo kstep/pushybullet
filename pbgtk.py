@@ -36,10 +36,17 @@ def main():
         for ev in pb.stream(use_server_time=True):
             for push in ev.pushes(skip_empty=True):
                 try:
+                    if 'icon' in push:
+                        icon = '/tmp/pb-icon-%s.png' % push.package_name
+                        with open(icon, 'w') as f:
+                            f.write(push.icon)
+                    else:
+                        icon = icon_path
+
                     notify = pynotify.Notification(
                             push.get('title') or "PushBullet",
                             push.get('body') or push.get('url'),
-                            icon_path
+                            icon
                     )
 
                     notify.show()
