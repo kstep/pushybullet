@@ -6,6 +6,8 @@ from StringIO import StringIO
 import datetime
 import json
 import time
+import base64
+import binascii
 
 def get_apikey_from_config():
     try:
@@ -126,6 +128,12 @@ class PushBulletObject(object):
 
     def get(self, name, default=None):
         return getattr(self, name, default)
+
+    def json(self):
+        return dict(self.__dict__)
+
+    def __contains__(self, name):
+        return hasattr(self, name)
 
 # Push targets {{{
 
@@ -284,6 +292,10 @@ class Push(PushBulletObject):
     type = None
     def __init__(self, **data):
         self.__dict__.update(data)
+        self.decode()
+
+    def decode(self):
+        pass
 
     def send(self, target=None):
         '''
@@ -561,6 +573,12 @@ class MirrorPush(Push):
     Mirror push (internal usage only)
     '''
     type = 'mirror'
+
+    def decode(self):
+        try:
+            self.icon = base64.decodestring(self.icon)
+        except (AttributeError, binascii.Erorr):
+            pass
 
     def send(self, target):
         raise NotImplementedError
