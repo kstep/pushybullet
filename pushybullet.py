@@ -21,7 +21,7 @@ def get_apikey_from_config():
         return None
 
 def utf8(s):
-    return s if isinstance(s, unicode) else unicode(s, 'utf-8')
+    return s if isinstance(s, unicode) else unicode(s, 'utf-8') if isinstance(s, str) else unicode(s)
 
 # Events {{{
 class Event(object):
