@@ -3,6 +3,7 @@
 
 import os
 import sys
+import signal
 import pushybullet
 import requests
 import lxml.etree
@@ -73,6 +74,8 @@ def open_browser(sender):
     win.show_all()
 
 def main():
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+
     icon_path = os.path.realpath(os.path.join(os.path.dirname(__file__), "pushbullet.png"))
 
     icon = Gtk.StatusIcon()
