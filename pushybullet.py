@@ -358,7 +358,15 @@ class Push(PushBulletObject):
         self.decode()
 
     def decode(self):
-        pass
+        try:
+            self.modified = datetime.datetime.fromtimestamp(self.modified)
+        except AttributeError:
+            pass
+
+        try:
+            self.created = datetime.datetime.fromtimestamp(self.created)
+        except AttributeError:
+            pass
 
     def send(self, target=None):
         '''
@@ -651,6 +659,8 @@ class MirrorPush(Push):
     type = 'mirror'
 
     def decode(self):
+        super(MirrorPush, self).decode()
+
         try:
             self.icon = base64.decodestring(self.icon)
         except (AttributeError, binascii.Error):
