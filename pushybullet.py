@@ -147,6 +147,25 @@ class PushBulletObject(object):
     def __contains__(self, name):
         return hasattr(self, name)
 
+    def __str__(self):
+        return unicode(self).encode('utf8')
+
+class Grant(PushBulletObject):
+    def __init__(self, api, iden=None, **data):
+        self.iden = iden
+        self.__dict__.update(data)
+        self.bind(api)
+
+    @property
+    def uri(self):
+        return 'grants/%s' % self.iden
+
+    def __repr__(self):
+        return '<Grant[%s]: %s>' % (self.iden, self.client['name'])
+
+    def __unicode__(self):
+        return u'grant for %s' % (self.client['name'])
+
 # Push targets {{{
 
 class PushTarget(PushBulletObject):
@@ -181,9 +200,6 @@ class PushTarget(PushBulletObject):
 
         push.send(self)
         return push
-
-    def __str__(self):
-        return unicode(self).encode('utf8')
 
 class Contact(PushTarget):
     '''
@@ -796,6 +812,19 @@ class PushBullet(PushTarget):
             self.__devices = list(self.iter_devices())
 
         return self.__devices
+
+    __grants = None
+    def grants(self, reset_cache=False):
+        if reset_cache or self.__grants is None:
+            self.__grants = list(self.iter_grants())
+
+        return self.__grants
+
+    def iter_grants(self, skip_inactive=True, limit=None):
+        return self.paged('grants',
+                (lambda g: g['active']) if skip_inactive else (lambda g: True),
+                lambda g: Grant(self, **g),
+                limit=None)
 
 
     def __getitem__(self, device_iden):
