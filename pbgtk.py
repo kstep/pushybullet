@@ -97,6 +97,8 @@ def main():
             apikey = YOUR_API_KEY_HERE
         '''))
 
+        return
+
     def pb_watch():
         for ev in pb.stream(use_server_time=True):
             for push in ev.pushes(skip_empty=True):
