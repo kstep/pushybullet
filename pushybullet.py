@@ -126,6 +126,18 @@ class PushBulletObject(object):
         '''
         return bool(getattr(self, 'api', None))
 
+    @classmethod
+    def load(cls, api, iden):
+        self = cls()
+        self.bind(api)
+        self.iden = iden
+        self.reload()
+        return self
+
+    def reload(self):
+        self.__dict__.update(self.api.get(self.uri))
+        return self
+
     def get(self, name, default=None):
         return getattr(self, name, default)
 
@@ -141,7 +153,7 @@ class PushTarget(PushBulletObject):
     '''
     Abstract push target object
     '''
-    def __init__(self, api, iden, **data):
+    def __init__(self, api, iden=None, **data):
         self.iden = iden
         self.__dict__.update(data)
         self.bind(api)
@@ -743,6 +755,10 @@ class PushBullet(PushTarget):
         :rtype: Contact
         '''
         return Contact(self, None, name=name, email=email).create()
+
+    def load(self, cls, iden):
+        assert isinstance(cls, PushBulletObject)
+        return cls.load(self, iden)
 
     def iter_contacts(self, skip_inactive=True, limit=None):
         '''
