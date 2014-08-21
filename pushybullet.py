@@ -139,6 +139,13 @@ class PushBulletObject(object):
     def reload(self):
         self.__dict__.update(self.api.get(self.uri))
         return self
+            
+    @classmethod
+    def iterate(cls, api, skip_inactive=True, limit=None):
+        return api.paged(cls.collection_name,
+            (lambda o: o['active']) if skip_inactive else (lambda o: True),
+            lambda o: cls(api, **o),
+            limit=limit)
 
     def get(self, name, default=None):
         return getattr(self, name, default)
@@ -742,17 +749,18 @@ class PushBullet(PushTarget):
         '''
         response = self.sess.post(_uri, data=data, files=files, auth=()).raise_for_status()
 
-    def iter_devices(self, skip_inactive=True, limit=None):
-        '''
-        Get available devices to push to
+    def paged(self, _uri, _filter, _wrapper, **params):
+        page = self.get(_uri, **params)
 
-        :param bool skip_inactive: if False, fetch all devices, even inactive ones
-        '''
+        while True:
+            for item in page[_uri]:
+                if _filter(item):
+                    yield _wrapper(item)
 
-        return self.paged('devices',
-                (lambda d: d['active']) if skip_inactive else (lambda d: True),
-                lambda d: Device(self, **d),
-                limit=limit)
+            if not page.get('cursor'):
+                break
+
+            page = self.get(_uri, cursor=page['cursor'])
 
     def create_device(self, nickname, type='stream'):
         '''
@@ -774,21 +782,9 @@ class PushBullet(PushTarget):
         '''
         return Contact(self, None, name=name, email=email).create()
 
-    def load(self, cls, iden):
-        assert isinstance(cls, PushBulletObject)
-        return cls.load(self, iden)
-
-    def iter_contacts(self, skip_inactive=True, limit=None):
-        '''
-        Get available contacts to push to
-
-        :param bool skip_inactive: if False, fetch all contacts, even inactive ones
-        '''
-        return self.paged('contacts',
-                (lambda c: c['active']) if skip_inactive else (lambda c: True),
-                lambda c: Contact(self, **c),
-                limit=None)
-
+    iter_contacts = lambda s, skip=True, limit=None: Contact.iterate(s, skip, limit)
+    iter_devices = lambda s, skip=True, limit=None: Device.iterate(s, skip, limit)
+    iter_grants = lambda s, skip=True, limit=None: Grant.iterate(s, skip, limit)
 
     __contacts = None
     def contacts(self, reset_cache=False):
@@ -821,12 +817,6 @@ class PushBullet(PushTarget):
             self.__grants = list(self.iter_grants())
 
         return self.__grants
-
-    def iter_grants(self, skip_inactive=True, limit=None):
-        return self.paged('grants',
-                (lambda g: g['active']) if skip_inactive else (lambda g: True),
-                lambda g: Grant(self, **g),
-                limit=None)
 
 
     def __getitem__(self, device_iden):
@@ -892,19 +882,6 @@ class PushBullet(PushTarget):
                 modified_after=since,
                 limit=limit)
 
-
-    def paged(self, _uri, _filter, _wrapper, **params):
-        page = self.get(_uri, **params)
-
-        while True:
-            for item in page[_uri]:
-                if _filter(item):
-                    yield _wrapper(item)
-
-            if not page.get('cursor'):
-                break
-
-            page = self.get(_uri, cursor=page['cursor'])
 
     __me = None
     def me(self, reset_cache=False):
