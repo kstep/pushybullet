@@ -25,6 +25,28 @@ def get_apikey_from_config():
 def utf8(s):
     return s if isinstance(s, unicode) else unicode(s, 'utf-8') if isinstance(s, str) else unicode(s)
 
+def parse_since(since):
+    if not since:
+        return 0
+
+    if isinstance(since, (long, int)):
+        return since + time.time() if since < 0 else since
+
+    if isinstance(since, datetime.date):
+        return since.strftime('%s')
+
+    if isinstance(since, datetime.timedelta):
+        return (datetime.datetime.now() - since).strftime('%s')
+
+    try:
+        since = int(since)
+        return since + time.time() if since < 0 else since
+
+    except ValueError:
+        from dateutil.parser import parse
+        return parse(since).strftime('%s')
+
+
 # Events {{{
 class Event(object):
     '''
@@ -128,24 +150,20 @@ class PushBulletObject(object):
         '''
         return bool(getattr(self, 'api', None))
 
-    @classmethod
-    def load(cls, api, iden):
-        self = cls()
-        self.bind(api)
-        self.iden = iden
-        self.reload()
-        return self
-
     def reload(self):
         self.__dict__.update(self.api.get(self.uri))
         return self
             
     @classmethod
-    def iterate(cls, api, skip_inactive=True, limit=None):
-        return api.paged(cls.collection_name,
-            (lambda o: o['active']) if skip_inactive else (lambda o: True),
-            lambda o: cls(api, **o),
-            limit=limit)
+    def iterate(cls, api, skip_inactive=True, since=0, limit=None):
+        it = api.paged(cls.collection_name,
+                modified_after=parse_since(since),
+                limit=limit)
+
+        if skip_inactive:
+            return (cls(api, **o) for o in it if o.get('active', False))
+        else:
+            return (cls(api, **o) for o in it)
 
     def get(self, name, default=None):
         return getattr(self, name, default)
@@ -188,7 +206,7 @@ class Grant(PushBulletObject, ObjectWithIden):
 
 # Push targets {{{
 
-class PushTarget(PushBulletObject, ObjectWithIden):
+class PushTarget(PushBulletObject):
     '''
     Abstract push target object
     '''
@@ -216,7 +234,7 @@ class PushTarget(PushBulletObject, ObjectWithIden):
         push.send(self)
         return push
 
-class Contact(PushTarget):
+class Contact(PushTarget, ObjectWithIden):
     '''
     Contact to push to
     '''
@@ -252,7 +270,7 @@ class Contact(PushTarget):
         self.name = newname
         return self.update()
 
-class Device(PushTarget):
+class Device(PushTarget, ObjectWithIden):
     '''
     Device to push to
     '''
@@ -295,6 +313,10 @@ class User(PushTarget):
     '''
     User profile
     '''
+    @classmethod
+    def load(cls, api):
+        return cls(api, **api.get('users/me'))
+
     def __repr__(self):
         return '<User[%s]: %s <%s>>' % (self.iden,
                 getattr(self, 'name', 'Unnamed'),
@@ -643,8 +665,8 @@ def cached_list_method(cls):
     return wrapper
     
 def iterator_method(cls):
-    def iterator(self, skip_inactive=False, limit=None):
-        return cls.iterate(self, skip_inactive, limit)
+    def iterator(self, skip_inactive=False, since=0, limit=None):
+        return cls.iterate(self, skip_inactive, since, limit)
     return iterator
 
 class PushBullet(PushTarget):
@@ -762,13 +784,12 @@ class PushBullet(PushTarget):
         '''
         response = self.sess.post(_uri, data=data, files=files, auth=()).raise_for_status()
 
-    def paged(self, _uri, _filter, _wrapper, **params):
+    def paged(self, _uri, **params):
         page = self.get(_uri, **params)
 
         while True:
             for item in page[_uri]:
-                if _filter(item):
-                    yield _wrapper(item)
+                yield item
 
             if not page.get('cursor'):
                 break
@@ -803,28 +824,6 @@ class PushBullet(PushTarget):
     devices = cached_list_method(Device)
     grants = cached_list_method(Grant)
 
-    def __getitem__(self, device_iden):
-        '''
-        Find and return device object by device iden or device name
-
-        At first search is done by device iden field, and if it's not found,
-        search is repeated by device name. A device name is either device nickname,
-        model or iden, whichever is defined for any given device object.
-
-        So you can get your Chrome device object with `api["Chrome"]` call.
-
-        Throws `KeyError` if no device is found.
-
-        :param str device_iden: a device iden
-        '''
-        try:
-            return next(d for d in self.devices() if d.iden == device_iden)
-        except StopIteration:
-            try:
-                return next(d for d in self.devices() if utf8(d) == device_iden)
-            except StopIteration:
-                raise KeyError(device_iden)
-
     def pushes(self, since=0, skip_empty=True, limit=None):
         '''
         Generator fetches and yields all pushes since given timestamp
@@ -847,36 +846,47 @@ class PushBullet(PushTarget):
         :param int limit: limit number of items per page
         :rtype: generator
         '''
-        if isinstance(since, datetime.date):
-            since = since.strftime('%s')
-        elif isinstance(since, datetime.timedelta):
-            since = (datetime.datetime.now() - since).strftime('%s')
-        else:
-            try:
-                since = int(since)
-                if since < 0:
-                    since += time.time()
-            except ValueError:
-                from dateutil.parser import parse
-                since = parse(since).strftime('%s')
-
-        return self.paged('pushes',
-                (lambda p: bool(p.get('type'))) if skip_empty else (lambda p: True),
-                self.make_push,
-                modified_after=since,
+        it = self.paged(Push.collection_name,
+                modified_after=parse_since(since),
                 limit=limit)
 
+        if skip_empty:
+            return (self.make_push(o) for o in it if bool(o.get('type', None)))
+        else:
+            return (self.make_push(o) for o in it)
 
-    __me = None
+    def __getitem__(self, device_iden):
+        '''
+        Find and return device object by device iden or device name
+
+        At first search is done by device iden field, and if it's not found,
+        search is repeated by device name. A device name is either device nickname,
+        model or iden, whichever is defined for any given device object.
+
+        So you can get your Chrome device object with `api["Chrome"]` call.
+
+        Throws `KeyError` if no device is found.
+
+        :param str device_iden: a device iden
+        '''
+        try:
+            return next(d for d in self.devices() if d.iden == device_iden)
+        except StopIteration:
+            try:
+                return next(d for d in self.devices() if utf8(d) == device_iden)
+            except StopIteration:
+                raise KeyError(device_iden)
+
+    _me = None
     def me(self, reset_cache=False):
         '''
         Get current user information
         '''
-        if not reset_cache and self.__me:
-            return self.__me
+        if not reset_cache and self._me:
+            return self._me
 
-        self.__me = User(self, **self.get('users/me'))
-        return self.__me
+        self._me = User.load(self)
+        return self._me
 
     def make_target(self, target):
         if target is None:
