@@ -634,6 +634,19 @@ class DismissalPush(Push):
 
 # Main API class {{{
 
+def cached_list_method(cls):
+    cache_key = '_%s' % cls.collection_name
+    def wrapper(self, reset_cache=False):
+        if reset_cache or getattr(self, cache_key, None) is None:
+            setattr(self, cache_key, list(cls.iterate(self)))
+        return getattr(self, cache_key)
+    return wrapper
+    
+def iterator_method(cls):
+    def iterator(self, skip_inactive=False, limit=None):
+        return cls.iterate(self, skip_inactive, limit)
+    return iterator
+
 class PushBullet(PushTarget):
     '''
     Main API class for PushBullet
@@ -782,42 +795,13 @@ class PushBullet(PushTarget):
         '''
         return Contact(self, None, name=name, email=email).create()
 
-    iter_contacts = lambda s, skip=True, limit=None: Contact.iterate(s, skip, limit)
-    iter_devices = lambda s, skip=True, limit=None: Device.iterate(s, skip, limit)
-    iter_grants = lambda s, skip=True, limit=None: Grant.iterate(s, skip, limit)
-
-    __contacts = None
-    def contacts(self, reset_cache=False):
-        '''
-        Get available contacts to push to as a plain list
-
-        :param bool reset_cache: if True, reset inner contacts cache
-        '''
-        if reset_cache or self.__contacts is None:
-            self.__contacts = list(self.iter_contacts())
-
-        return self.__contacts
-
-
-    __devices = None
-    def devices(self, reset_cache=False):
-        '''
-        Get available devices to push to as a plain list
-
-        :param bool reset_cache: if True, reset inner devices cache
-        '''
-        if reset_cache or self.__devices is None:
-            self.__devices = list(self.iter_devices())
-
-        return self.__devices
-
-    __grants = None
-    def grants(self, reset_cache=False):
-        if reset_cache or self.__grants is None:
-            self.__grants = list(self.iter_grants())
-
-        return self.__grants
-
+    iter_contacts = iterator_method(Contact)
+    iter_devices = iterator_method(Device)
+    iter_grants = iterator_method(Grant)
+    
+    contacts = cached_list_method(Contact)
+    devices = cached_list_method(Device)
+    grants = cached_list_method(Grant)
 
     def __getitem__(self, device_iden):
         '''
