@@ -95,6 +95,8 @@ class PushBulletObject(object):
     Abstract Pushbullet object for given REST endpoint
     '''
 
+    collection_name = None
+
     @property
     def uri(self):
         '''
@@ -149,16 +151,27 @@ class PushBulletObject(object):
 
     def __str__(self):
         return unicode(self).encode('utf8')
-
-class Grant(PushBulletObject):
+        
+class ObjectWithIden(object):
+    @classmethod
+    def load(cls, api, iden):
+        self = cls()
+        self.bind(api)
+        self.iden = iden
+        self.reload()
+        return self
+        
     def __init__(self, api, iden=None, **data):
         self.iden = iden
         self.__dict__.update(data)
         self.bind(api)
-
-    @property
+    
+    @property    
     def uri(self):
-        return 'grants/%s' % self.iden
+        return '%s/%s' % (self.collection_name, self.iden)
+
+class Grant(PushBulletObject, ObjectWithIden):
+    collection_name = 'grants'
 
     def __repr__(self):
         return '<Grant[%s]: %s>' % (self.iden, self.client['name'])
@@ -168,15 +181,10 @@ class Grant(PushBulletObject):
 
 # Push targets {{{
 
-class PushTarget(PushBulletObject):
+class PushTarget(PushBulletObject, ObjectWithIden):
     '''
     Abstract push target object
     '''
-    def __init__(self, api, iden=None, **data):
-        self.iden = iden
-        self.__dict__.update(data)
-        self.bind(api)
-
     @property
     def ident(self):
         '''
@@ -205,6 +213,8 @@ class Contact(PushTarget):
     '''
     Contact to push to
     '''
+    collection_name = 'contacts'
+
     def __repr__(self):
         return '<Contact[%s]: %s <%s>>' % (self.iden,
                 getattr(self, 'name', 'Unnamed'),
@@ -216,10 +226,6 @@ class Contact(PushTarget):
     @property
     def ident(self):
         return {'email': self.email_normalized}
-
-    @property
-    def uri(self):
-        return 'contacts/%s' % self.iden
 
     def create(self):
         if self.iden:
@@ -243,6 +249,8 @@ class Device(PushTarget):
     '''
     Device to push to
     '''
+    collection_name = 'devices'
+
     def __repr__(self):
         return '<Device[%s]: %s>' % (self.iden,
                 getattr(self, 'nickname', None) or
@@ -257,10 +265,6 @@ class Device(PushTarget):
     @property
     def ident(self):
         return {'device_iden': self.iden}
-
-    @property
-    def uri(self):
-        return 'devices/%s' % self.iden
 
     def create(self):
         if self.iden:
@@ -318,6 +322,8 @@ class Push(PushBulletObject):
     Abstract push object
     '''
     type = None
+    collection_name = 'pushes'
+
     def __init__(self, **data):
         self.__dict__.update(data)
         self.decode()
@@ -396,9 +402,6 @@ class Push(PushBulletObject):
     def __unicode__(self):
         return u'%s push' % getattr(self, 'type', 'general')
 
-    @property
-    def uri(self):
-        return 'pushes/%s' % self.iden
 
 class NotePush(Push):
     '''
@@ -750,7 +753,6 @@ class PushBullet(PushTarget):
                 (lambda d: d['active']) if skip_inactive else (lambda d: True),
                 lambda d: Device(self, **d),
                 limit=limit)
-
 
     def create_device(self, nickname, type='stream'):
         '''
