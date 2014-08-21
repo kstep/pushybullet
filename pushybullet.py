@@ -422,6 +422,20 @@ class Push(PushBulletObject):
         '''
         raise NotImplementedError
 
+    def target_device(self):
+        '''
+        Get target device object
+        '''
+        iden = self.get('target_device_iden')
+        return Device(self.api, iden) if iden else None
+
+    def source_device(self):
+        '''
+        Get source device object
+        '''
+        iden = self.get('source_device_iden')
+        return Device(self.api, iden) if iden else None
+
     def __eq__(self, other):
         return isinstance(other, Push) and self.iden == other.iden
 
