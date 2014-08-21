@@ -605,7 +605,7 @@ class MirrorPush(Push):
     def decode(self):
         try:
             self.icon = base64.decodestring(self.icon)
-        except (AttributeError, binascii.Erorr):
+        except (AttributeError, binascii.Error):
             pass
 
     def send(self, target):
