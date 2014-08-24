@@ -422,6 +422,7 @@ class Push(PushBulletObject):
         '''
         raise NotImplementedError
 
+    @property
     def target_device(self):
         '''
         Get target device object
@@ -429,6 +430,7 @@ class Push(PushBulletObject):
         iden = self.get('target_device_iden')
         return Device(self.api, iden) if iden else None
 
+    @property
     def source_device(self):
         '''
         Get source device object
