@@ -153,7 +153,7 @@ class PushBulletObject(object):
     def reload(self):
         self.__dict__.update(self.api.get(self.uri))
         return self
-            
+
     @classmethod
     def iterate(cls, api, skip_inactive=True, since=0, limit=None):
         it = api.paged(cls.collection_name,
@@ -176,7 +176,7 @@ class PushBulletObject(object):
 
     def __str__(self):
         return unicode(self).encode('utf8')
-        
+
 class ObjectWithIden(object):
     @classmethod
     def load(cls, api, iden):
@@ -185,13 +185,13 @@ class ObjectWithIden(object):
         self.iden = iden
         self.reload()
         return self
-        
+
     def __init__(self, api, iden=None, **data):
         self.iden = iden
         self.__dict__.update(data)
         self.bind(api)
-    
-    @property    
+
+    @property
     def uri(self):
         return '%s/%s' % (self.collection_name, self.iden)
 
@@ -689,7 +689,7 @@ def cached_list_method(cls):
             setattr(self, cache_key, list(cls.iterate(self)))
         return getattr(self, cache_key)
     return wrapper
-    
+
 def iterator_method(cls):
     def iterator(self, skip_inactive=False, since=0, limit=None):
         return cls.iterate(self, skip_inactive, since, limit)
@@ -845,7 +845,7 @@ class PushBullet(PushTarget):
     iter_contacts = iterator_method(Contact)
     iter_devices = iterator_method(Device)
     iter_grants = iterator_method(Grant)
-    
+
     contacts = cached_list_method(Contact)
     devices = cached_list_method(Device)
     grants = cached_list_method(Grant)
