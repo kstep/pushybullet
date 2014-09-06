@@ -17,6 +17,65 @@ try:
 except ImportError:
     import json
 
+class FilelikeGenerator(object):
+    def __init__(self, gen):
+        self.__gen = gen
+        self.__buf = ''
+        self.__eof = False
+
+    def __popbuf(self, buflen):
+        self.__buf, res = self.__buf[buflen+1:], self.__buf[0:buflen]
+        return res
+
+    def read(self, buflen=0):
+        if buflen > 0:
+            if len(self.__buf) >= buflen:
+                return self.__popbuf(buflen)
+
+            if self.__eof:
+                return None
+
+            while len(self.__buf) < buflen:
+                try:
+                    self.__buf += self.__gen.next()
+                except StopIteration:
+                    self.__eof = True
+                    break
+
+            return self.__popbuf(buflen)
+
+        else:
+            for part in self.__gen:
+                self.__buf += part
+
+            self.__eof = True
+            res, self.__buf = self.__buf, ''
+            return res or None
+
+    def next(self):
+        value = self.read(8192)
+        if value is None:
+            raise StopIteration
+        return value
+
+    def isatty(self):
+        return False
+
+    @property
+    def closed(self):
+        return False
+
+    def close(self):
+        pass
+
+    def seek(self, pos, whence=0):
+        raise NotImplementedError
+
+def filelike_generator(func):
+    def wrapper(*args, **kwargs):
+        return FilelikeGenerator(func(*args, **kwargs))
+    return wrapper
+
 class Session(object):
     auth = ()
     headers = {}
@@ -98,7 +157,8 @@ class Session(object):
         if files:
             _data = data.copy() if data else {}
             _data.update(files)
-            content_type, _data = self._encode_form_data(_data)
+            boundary = '----' + ''.join(chr(random.choice(xrange(ord('a'), ord('z')))) for _ in xrange(0, 30))
+            content_type, _data = 'multipart/form-data; boundary=%s' % boundary, self._encode_form_data(_data, boundary)
 
         elif data:
             content_type, _data = ('application/x-www-form-urlencoded',
@@ -109,7 +169,7 @@ class Session(object):
 
         if _data:
             _headers['Content-Type'] = content_type
-            _headers['Content-Length'] = str(len(_data))
+            #_headers['Content-Length'] = str(len(_data))
 
         if headers:
             _headers.update(headers)
