@@ -1,13 +1,131 @@
 # -*- encoding: utf-8 -*-
-from requests import session
-from os.path import basename, expanduser
-from os import fdopen
+
 from StringIO import StringIO
+import os
 import datetime
-import json
 import time
 import base64
 import binascii
+
+import urllib
+import urlparse
+import httplib
+import random
+
+try:
+    import simplejson as json
+except ImportError:
+    import json
+
+class Session(object):
+    auth = ()
+    headers = {}
+
+    def get(self, url, params=None, auth=None, headers=None):
+        return self._request('GET', url, params=params, auth=auth, headers=headers)
+
+    def post(self, url, params=None, data=None, files=None, auth=None, headers=None):
+        return self._request('POST', url, params=params, data=data, files=files, auth=auth, headers=headers)
+
+    def delete(self, url, params=None, auth=None, headers=None):
+        return self._request('DELETE', url, params=params, auth=auth, headers=headers)
+
+    def _encode_form_data(self, data):
+        boundary = ''.join(chr(random.choice(xrange(ord('a'), ord('z')))) for _ in xrange(0, 30))
+
+        body = []
+        for name, value in data.iteritems():
+            if hasattr(value, 'read'):
+                body.append(
+                    'Content-Type: application/octet-stream\r\n'
+                    'Content-Disposition: form-data; name="%s"; filename="%s"\r\n'
+                    'Content-Length: %s'
+                    '\r\n'
+                    '%s' % (
+                        urllib.quote(name),
+                        urllib.quote(value.name),
+                        os.fstat(value.fileno()).st_size,
+                        value.read()))
+            else:
+                body.append(
+                        'Content-Type: text/plain\r\n'
+                        'Content-Disposition: form-data; name="%s"\r\n'
+                        'Content-Length: %s\r\n'
+                        '\r\n'
+                        '%s' % (
+                            urllib.quote(name),
+                            len(value),
+                            value))
+
+        return 'multipart/form-data; boundary="%s"' % boundary, ('--%s\r\n' % boundary) + ('\r\n--%s\r\n' % boundary).join(body) + ('\r\n--%s--\r\n' % boundary)
+
+    class Response(object):
+        def __init__(self, resp):
+            self.__resp = resp
+
+        def json(self):
+            return json.load(self.__resp)
+
+        def raise_for_status(self):
+            status = self.__resp.status
+            kind = status // 100
+
+            if kind in (1, 2, 3):
+                return
+
+            raise RuntimeError('%s %s' % (status, self.__resp.reason))
+
+    def _request(self, method, url, params=None, data=None, files=None, auth=None, headers=None):
+        _url = urlparse.urlparse(url)
+
+        conn = {'http': httplib.HTTPConnection,
+                'https': httplib.HTTPSConnection}[_url.scheme](_url.hostname, _url.port)
+
+        if params:
+            _params = params.copy()
+            for k in _params.keys():
+                if _params[k] is None:
+                    del _params[k]
+
+            _query = urllib.urlencode(_params)
+
+        else:
+            _query = _url.query
+
+        _headers = self.headers.copy()
+        _headers['Host'] = _url.hostname
+
+        if files:
+            _data = data.copy() if data else {}
+            _data.update(files)
+            content_type, _data = self._encode_form_data(_data)
+
+        elif data:
+            content_type, _data = ('application/x-www-form-urlencoded',
+                    urllib.urlencode(data) if isinstance(data, dict) else str(data))
+
+        else:
+            content_type, _data = None, None
+
+        if _data:
+            _headers['Content-Type'] = content_type
+            _headers['Content-Length'] = str(len(_data))
+
+        if headers:
+            _headers.update(headers)
+
+        _auth = auth if auth is not None else (
+                (_url.username or '', _url.password or '')
+                    if (_url.username is not None or _url.password is not None) else
+                self.auth)
+        if _auth:
+            _headers['Authorization'] = 'Basic %s' % base64.encodestring(':'.join(_auth)).strip()
+
+        print(method, '?'.join((_url.path, _query)), _data, _headers)
+        conn.request(method, '?'.join((_url.path, _query)), _data, _headers)
+
+        response = conn.getresponse()
+        return self.Response(response)
 
 def get_apikey_from_config():
     try:
@@ -17,7 +135,7 @@ def get_apikey_from_config():
 
     try:
         config = ConfigParser()
-        config.read(expanduser('~/.config/pushbullet/config.ini'))
+        config.read(os.path.expanduser('~/.config/pushbullet/config.ini'))
         return config.get('pushbullet', 'apikey')
     except:
         return None
@@ -617,12 +735,12 @@ class FilePush(Push):
         if not self.file_url:  # file not uploaded yet
             fh = (self.file if hasattr(self.file, 'read') else  # file-like object
                   self.file.open('rb') if hasattr(self.file, 'open') else  # openable object
-                  fdopen(self.file, 'rb') if isinstance(self.file, int) else  # file descriptor
+                  os.fdopen(self.file, 'rb') if isinstance(self.file, int) else  # file descriptor
                   StringIO(self.file) if isinstance(self.file, buffer) else  # in-memory file
                   open(self.file, 'rb'))  # file name
 
             try:
-                file_name = utf8(self.file_name) if self.file_name else basename(fh.name)
+                file_name = utf8(self.file_name) if self.file_name else os.path.basename(fh.name)
                 file_type = utf8(self.file_type) if self.file_type else self.guess_type(fh)
                 req = target.api.get('upload-request', file_name=file_name, file_type=file_type)
                 target.api.upload(req['upload_url'], data=req['data'], file=fh)
@@ -709,7 +827,7 @@ class PushBullet(PushTarget):
         :param str apikey: API key (get at https://www.pushbullet.com/account)
         '''
         self.apikey = apikey
-        self.sess = session()
+        self.sess = Session()
         self.sess.auth = (apikey, '')
 
     def get_type_by_args(self, args, arg=None):
@@ -780,7 +898,7 @@ class PushBullet(PushTarget):
         Helper method for POST requests to API
         '''
         response = self.sess.post(self.API_URL % _uri, data=json.dumps(data),
-                headers={'content-type': 'application/json'})
+                headers={'Content-Type': 'application/json'})
         response.raise_for_status()
 
         result = response.json()
