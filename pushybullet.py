@@ -431,6 +431,32 @@ class Channel(PushTarget, ObjectWithIden):
     def ident(self):
         return {'channel_tag': self.tag}
 
+    def create(self):
+        if self.iden:
+            raise PushBulletError('channel already exists')
+
+        self.__dict__.update(self.api.post('clients',
+            tag=self.tag,
+            name=getattr(self, 'name', None),
+            description=getattr(self, 'description', None),
+            feed_url=getattr(self, 'feed_url', None),
+            feed_filters=getattr(self, 'feed_filters', None)))
+
+        return self
+
+    def update(self):
+        if not self.iden:
+            raise PushBulletError('channel does not exist yet')
+
+        self.__dict__.update(self.api.post(self.uri,
+            name=getattr(self, 'name', None),
+            description=getattr(self, 'description', None),
+            feed_url=getattr(self, 'feed_url', None),
+            feed_filters=getattr(self, 'feed_filters', None)))
+
+        return self
+
+
 class Client(PushTarget, ObjectWithIden):
     '''
     Current user's OAuth client
