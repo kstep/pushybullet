@@ -5,11 +5,11 @@ Python bindings for Pushbullet (http://pushbullet.com/) API v2
 
 Features:
 
-* list devices, contacts, channels, clients and grants,
+* list devices, contacts, channels, clients, subscriptions and grants,
 * list all pushes history (in a nice generator-way),
 * watch for new push events in realtime,
 * send any kind of pushes in a number of convienient ways,
-* delete pushes, devices, contacts, channels, clients and grants,
+* delete pushes, devices, contacts, channels, clients, subscriptions and grants,
 * rename devices and contacts, dismiss pushes,
 * create new (stream) devices,
 * get info about current user,
@@ -47,12 +47,12 @@ chrome = api['Chrome']
 ```
 
 All the same works for contacts (class name `Contact`), clients (`Client`),
-channels (`Channel`) and grants (`Grant`), except for API object indexing, it
-works for devices only.
+channels (`Channel`), subscriptions (`Subscription`) and grants (`Grant`),
+except for API object indexing, it works for devices only.
 
 All these methods (`contacts()`, `devices()`, `clients()`, `channels()`,
-`grants()`) cache their results fetched from PushBullet service, so if you want
-to get really fresh (non cached) data, use `reset_cache=True` argument:
+`grants()`, `subscriptions()`) cache their results fetched from PushBullet service,
+so if you want to get really fresh (non cached) data, use `reset_cache=True` argument:
 
 ```python
 devices = api.devices(reset_cache=True)  # ignore cache!
