@@ -181,7 +181,6 @@ class Session(object):
         if _auth:
             _headers['Authorization'] = 'Basic %s' % base64.encodestring(':'.join(_auth)).strip()
 
-        print(method, '?'.join((_url.path, _query)), _data, _headers)
         conn.request(method, '?'.join((_url.path, _query)), _data, _headers)
 
         response = conn.getresponse()
@@ -280,7 +279,7 @@ class PushEvent(Event):
         self.push = push
 
     def __repr__(self):
-        return '<%s[%r] @%s>' % (self.__class__.__name__, self.push, self.time)
+        return (u'<%s[%r] @%s>' % (self.__class__.__name__, self.push, self.time)).encode('utf-8')
 
     def pushes(self, skip_empty=False, limit=None):
         yield self.push
@@ -377,7 +376,7 @@ class Grant(PushBulletObject, ObjectWithIden):
     collection_name = 'grants'
 
     def __repr__(self):
-        return '<Grant[%s]: %s>' % (self.iden, self.client['name'])
+        return (u'<Grant[%s]: %s>' % (self.iden, self.client['name'])).encode('utf-8')
 
     def __unicode__(self):
         return u'grant for %s' % (self.client['name'])
@@ -419,9 +418,9 @@ class Contact(PushTarget, ObjectWithIden):
     collection_name = 'contacts'
 
     def __repr__(self):
-        return '<Contact[%s]: %s <%s>>' % (self.iden,
+        return (u'<Contact[%s]: %s <%s>>' % (self.iden,
                 getattr(self, 'name', 'Unnamed'),
-                getattr(self, 'email', None) or getattr(self, 'email_normalized'))
+                getattr(self, 'email', None) or getattr(self, 'email_normalized'))).encode('utf-8')
 
     def __unicode__(self):
         return u'%s <%s>' % (self.name, self.email)
@@ -455,10 +454,10 @@ class Device(PushTarget, ObjectWithIden):
     collection_name = 'devices'
 
     def __repr__(self):
-        return '<Device[%s]: %s>' % (self.iden,
+        return (u'<Device[%s]: %s>' % (self.iden,
                 getattr(self, 'nickname', None) or
                 getattr(self, 'model', None) or
-                'Unnamed')
+                'Unnamed')).encode('utf-8')
 
     def __unicode__(self):
         return (getattr(self, 'nickname', None) or
@@ -496,9 +495,9 @@ class User(PushTarget):
         return cls(api, **api.get('users/me'))
 
     def __repr__(self):
-        return '<User[%s]: %s <%s>>' % (self.iden,
+        return (u'<User[%s]: %s <%s>>' % (self.iden,
                 getattr(self, 'name', 'Unnamed'),
-                getattr(self, 'email', None) or getattr(self, 'email_normalized'))
+                getattr(self, 'email', None) or getattr(self, 'email_normalized'))).encode('utf-8')
 
     @property
     def ident(self):
@@ -628,7 +627,7 @@ class Push(PushBulletObject):
         return isinstance(other, Push) and self.iden == other.iden
 
     def __repr__(self):
-        return u'<%s[%s]: %s>' % (self.__class__.__name__, getattr(self, 'iden', None), unicode(self))
+        return (u'<%s[%s]: %s>' % (self.__class__.__name__, getattr(self, 'iden', None), unicode(self))).encode('utf-8')
 
     def __unicode__(self):
         return u'%s push' % getattr(self, 'type', 'general')
