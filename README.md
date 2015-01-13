@@ -5,11 +5,11 @@ Python bindings for Pushbullet (http://pushbullet.com/) API v2
 
 Features:
 
-* list devices and contacts,
+* list devices, contacts, channels, clients and grants,
 * list all pushes history (in a nice generator-way),
 * watch for new push events in realtime,
 * send any kind of pushes in a number of convienient ways,
-* delete devices, contacts and pushes,
+* delete pushes, devices, contacts, channels, clients and grants,
 * rename devices and contacts, dismiss pushes,
 * create new (stream) devices,
 * get info about current user,
@@ -46,18 +46,20 @@ device = pb.Device(api, 'deviden')
 chrome = api['Chrome']
 ```
 
-All the same works for contacts (the class name is `Contact`),
-except for API object indexing, it works for devices only.
+All the same works for contacts (class name `Contact`), clients (`Client`),
+channels (`Channel`) and grants (`Grant`), except for API object indexing, it
+works for devices only.
 
-Both `contacts()` and `devices()` methods cache their results fetched from PushBullet service,
-so if you want to get really fresh (non cached) data, use `reset_cache=True` argument:
+All these methods (`contacts()`, `devices()`, `clients()`, `channels()`,
+`grants()`) cache their results fetched from PushBullet service, so if you want
+to get really fresh (non cached) data, use `reset_cache=True` argument:
 
 ```python
 devices = api.devices(reset_cache=True)  # ignore cache!
 ```
 
-Also you can use `api.iter_devices()` and `api.iter_contacts()` methods to iterate over devices
-and contacts lazily. Unlike `api.devices()`/`api.contacts()`, these methods provide generators instead
+Also you can use `api.iter_devices()`, `api.iter_contacts()` etc methods to iterate over these
+objects lazily. Unlike `api.devices()` and friends, these methods provide generators instead
 of lists, never cache data, request more data pages from PushBullet lazily as needed,
 and support `skip_inactive=False` flag to get inactive (deleted) devices and contacts.
 
@@ -128,6 +130,10 @@ You can push to API object directly to push to all your available devices at onc
 api.push(push)
 api.push(file='/home/kstep/notes.txt')  # file push! (with file MIME type autodetection)
 ```
+
+You can push to any pushable object, actually, including `Device`, `Contact`,
+`Client`, `Contact`, `User` and `PushBullet` itself. (If you want gory details, any class
+which inherits `PushTarget` class, can be, well, a push target.)
 
 And finally you can often push plain objects:
 
