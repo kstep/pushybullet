@@ -44,6 +44,8 @@ def get_parser():
 
     contacts_group = subparsers.add_parser('contacts', help='list all contacts')
 
+    clients_group = subparsers.add_parser('clients', help='list all clients')
+
     pushes_group = subparsers.add_parser('pushes', help='list all pushes')
     pushes_group.add_argument('--since', help='show pushes since this timestamp', type=str, default='')
     pushes_group.add_argument('--with-empty', help='include empty pushes', action='store_false', dest='skip_empty', default=True)
@@ -93,6 +95,11 @@ def command_push(api, args):
         push.send(device)
 
     print('... all done!')
+
+def command_clients(api, args):
+    clients = api.clients()
+    for client in clients:
+        print(client.iden, str(client))
 
 def print_push(push):
     print('%(created)s %(type)s %(iden)s [%(flags)s] %(sender_iden)s <%(sender_email)s> -> %(receiver_iden)s <%(receiver_email)s> %(target_device_iden)s %(push)s' % dict(

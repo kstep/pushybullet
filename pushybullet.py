@@ -411,6 +411,24 @@ class PushTarget(PushBulletObject):
         push.send(self)
         return push
 
+class Client(PushTarget, ObjectWithIden):
+    '''
+    Current user's OAuth client
+
+    By pushing to it you push to all users, who granted access to the client.
+    '''
+    collection_name = 'clients'
+
+    def __repr__(self):
+        return (u'<Client[%s]: %s>' % (self.iden, getattr(self, 'name', 'Unnamed'))).encode('utf-8')
+
+    def __unicode__(self):
+        return getattr(self, 'name', 'Unnamed')
+
+    @property
+    def ident(self):
+        return {'client_iden': self.iden}
+
 class Contact(PushTarget, ObjectWithIden):
     '''
     Contact to push to
@@ -1022,10 +1040,12 @@ class PushBullet(PushTarget):
     iter_contacts = iterator_method(Contact)
     iter_devices = iterator_method(Device)
     iter_grants = iterator_method(Grant)
+    iter_clients = iterator_method(Client)
 
     contacts = cached_list_method(Contact)
     devices = cached_list_method(Device)
     grants = cached_list_method(Grant)
+    clients = cached_list_method(Client)
 
     def pushes(self, since=0, skip_empty=True, limit=None):
         '''
