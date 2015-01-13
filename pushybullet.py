@@ -411,6 +411,26 @@ class PushTarget(PushBulletObject):
         push.send(self)
         return push
 
+class Channel(PushTarget, ObjectWithIden):
+    '''
+    Channel to push to
+    '''
+    collection_name = 'channels'
+
+    def __repr__(self):
+        return (u'<Channel[%s]: %s (%s)>' % (self.iden,
+            getattr(self, 'name', 'Unnamed'),
+            getattr(self, 'tag', 'untagged'))).encode('utf-8')
+
+    def __unicode__(self):
+        return u'%s (%s)' % (
+                getattr(self, 'name', 'Unnamed'),
+                getattr(self, 'tag', 'untagged'))
+
+    @property
+    def ident(self):
+        return {'channel_tag': self.tag}
+
 class Client(PushTarget, ObjectWithIden):
     '''
     Current user's OAuth client
@@ -1041,11 +1061,13 @@ class PushBullet(PushTarget):
     iter_devices = iterator_method(Device)
     iter_grants = iterator_method(Grant)
     iter_clients = iterator_method(Client)
+    iter_channels = iterator_method(Channel)
 
     contacts = cached_list_method(Contact)
     devices = cached_list_method(Device)
     grants = cached_list_method(Grant)
     clients = cached_list_method(Client)
+    channels = iterator_method(Channel)
 
     def pushes(self, since=0, skip_empty=True, limit=None):
         '''
