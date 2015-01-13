@@ -396,6 +396,17 @@ class Subscription(PushBulletObject, ObjectWithIden):
     def channel(self):
         return ChannelInfo(self.api, **getattr(self, 'channel', {}))
 
+    def create(self, channel_tag):
+        if self.iden:
+            raise PushBulletError('subscription already exists')
+
+        if isinstance(channel_tag, (ChannelInfo, Channel)):
+            channel_tag = channel_tag.tag
+
+        self.__dict__.update(self.api.post('subscriptions', channel_tag=str(channel_tag)))
+
+        return self
+
 class ChannelInfo(PushBulletObject, ObjectWithIden):
     collection_name = 'channel-info'
 
@@ -412,6 +423,9 @@ class ChannelInfo(PushBulletObject, ObjectWithIden):
         return u'%s (%s)' % (
                 getattr(self, 'name', 'Unnamed'),
                 getattr(self, 'tag', 'untagged'))
+
+    def subscribe(self):
+        return Subscription(self.api, None).create(self.tag)
 
 # Push targets {{{
 
@@ -488,6 +502,8 @@ class Channel(PushTarget, ObjectWithIden):
 
         return self
 
+    def subscribe(self):
+        return Subscription(self.api, None).create(self.tag)
 
 class Client(PushTarget, ObjectWithIden):
     '''
@@ -1094,6 +1110,9 @@ class PushBullet(PushTarget):
                 break
 
             page = self.get(_uri, cursor=page['cursor'])
+
+    def subscribe(self, channel_tag):
+        return Subscription(self, None).create(channel_tag)
 
     def create_device(self, nickname, type='stream'):
         '''

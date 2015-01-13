@@ -11,6 +11,7 @@ Features:
 * send any kind of pushes in a number of convienient ways,
 * delete pushes, devices, contacts, channels, clients, subscriptions and grants,
 * rename devices and contacts, dismiss pushes,
+* subscribe to channels,
 * create new (stream) devices,
 * get info about current user,
 * update user preferences.
@@ -320,6 +321,41 @@ push.bind(api).delete()
 In other words, you can delete only pushes, which exist on PushBullet servers
 (which makes perfect sense, actually). You can't delete pushes you just created and never sent
 (so PushBullet service doesn't know a thing about them).
+
+## Subscribing/unsubscribing to a channel
+
+To subscribe to a channel, you need either a channel tag, or channel object.
+
+Channel tag can be found on Pushbullet website, channel object can be constructed
+from either channel iden in the usual way (`Channel(api, iden)`) or directly from API
+by listing your own channels (`api.channels()`/`api.iter_channels()`).
+
+Now you have the following options to subscribe:
+
+```python
+# With API object by tag or channel object:
+subscription = api.subscribe(channel_tag)  # or channel object
+
+# Via channel object subscribe method:
+subscription = channel.subscribe()
+
+# By constructing subscription object manually (not recommended):
+subscription = Subscription(api, None)
+subscription.create(channel)  # channel object or tag
+```
+
+To unsubscribe you need only subscription object, then you just delete it
+in the usual way, and you are done:
+
+```python
+subscription.delete()
+
+# Or unsubscribe from all subscriptions:
+# (don't run this code if you don't want to loose
+# all your subscriptions!)
+for s in api.iter_subscriptions():
+    s.delete()
+```
 
 That's all about it.
 
