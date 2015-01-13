@@ -46,7 +46,9 @@ def get_parser():
 
     clients_group = subparsers.add_parser('clients', help='list all clients')
 
-    clients_group = subparsers.add_parser('channels', help='list all channels')
+    channels_group = subparsers.add_parser('channels', help='list all channels')
+
+    subscriptions_group = subparsers.add_parser('subscriptions', help='list all subscriptions')
 
     pushes_group = subparsers.add_parser('pushes', help='list all pushes')
     pushes_group.add_argument('--since', help='show pushes since this timestamp', type=str, default='')
@@ -107,6 +109,12 @@ def command_channels(api, args):
     channels = api.channels()
     for channel in channels:
         print(channel.iden, str(channel))
+
+def command_subscriptions(api, args):
+    subscriptions = api.subscriptions()
+    for subscription in subscriptions:
+        print(subscription.__dict__)
+        print(subscription.iden, str(subscription))
 
 def print_push(push):
     print('%(created)s %(type)s %(iden)s [%(flags)s] %(sender_iden)s <%(sender_email)s> -> %(receiver_iden)s <%(receiver_email)s> %(target_device_iden)s %(push)s' % dict(

@@ -381,6 +381,38 @@ class Grant(PushBulletObject, ObjectWithIden):
     def __unicode__(self):
         return u'grant for %s' % (self.client['name'])
 
+class Subscription(PushBulletObject, ObjectWithIden):
+    collection_name = 'subscriptions'
+
+    def __repr__(self):
+        return (u'<Subscription[%s] %s>' % (self.iden, getattr(self, 'channel', {}).get('tag', 'untagged'))).encode('utf-8')
+
+    def __unicode__(self):
+        channel = getattr(self, 'channel', {})
+        return u'%s (%s)' % (
+                channel.get('name', 'Unnamed'),
+                channel.get('tag', 'untagged'))
+
+    def channel(self):
+        return ChannelInfo(self.api, **getattr(self, 'channel', {}))
+
+class ChannelInfo(PushBulletObject, ObjectWithIden):
+    collection_name = 'channel-info'
+
+    @classmethod
+    def load_by_tag(cls, api, tag):
+        return cls(api, **api.get('/channel-info', tag=utf8(tag)))
+
+    def __repr__(self):
+        return (u'<ChannelInfo[%s]: %s (%s)>' % (self.iden,
+            getattr(self, 'name', 'Unnamed'),
+            getattr(self, 'tag', 'untagged'))).encode('utf-8')
+
+    def __unicode__(self):
+        return u'%s (%s)' % (
+                getattr(self, 'name', 'Unnamed'),
+                getattr(self, 'tag', 'untagged'))
+
 # Push targets {{{
 
 class PushTarget(PushBulletObject):
@@ -1088,12 +1120,14 @@ class PushBullet(PushTarget):
     iter_grants = iterator_method(Grant)
     iter_clients = iterator_method(Client)
     iter_channels = iterator_method(Channel)
+    iter_subscriptions = iterator_method(Subscription)
 
     contacts = cached_list_method(Contact)
     devices = cached_list_method(Device)
     grants = cached_list_method(Grant)
     clients = cached_list_method(Client)
-    channels = iterator_method(Channel)
+    channels = cached_list_method(Channel)
+    subscriptions = cached_list_method(Subscription)
 
     def pushes(self, since=0, skip_empty=True, limit=None):
         '''
