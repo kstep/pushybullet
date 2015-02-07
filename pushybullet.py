@@ -598,6 +598,44 @@ class Device(PushTarget, ObjectWithIden):
         self.nickname = newname
         return self.update()
 
+class PhoneNumber(PushTarget):
+    '''
+    Phone number to push SMS to
+    '''
+    device = None
+    number = None
+
+    def __init__(self, device, number):
+        assert isinstance(device, Device)
+        self.device = device
+        self.number = str(number)
+
+    @property
+    def ident(self):
+        return {
+                'type': 'messaging_extension_reply',
+                'package_name': 'com.pushbullet.android',
+                'conversation_iden': self.number,
+                'target_device_iden': self.device.iden,
+                'source_user_iden': self.api.me.iden
+                }
+
+    def push(self, push=None, **pushargs):
+        api = self.device.api
+        if not isinstance(push, Push):
+            push = api.make_push(pushargs, push)
+
+        data = self.ident
+        data['message'] = push.body
+        api.post("ephemerals", type="push", push=data)
+        return push
+
+    def __repr__(self):
+        return (u'<PhoneNumber[%s] device=%s>' % (self.number, self.device)).encode('utf-8')
+
+    def __unicode__(self):
+        return self.number
+
 class User(PushTarget):
     '''
     User profile
