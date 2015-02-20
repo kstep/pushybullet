@@ -60,6 +60,7 @@ push.delete()
 s = "lorem ipsum dolor set amet"
 push = pb.FilePush(buffer(s), file_type="text/plain", file_name='note.txt')
 device.push(push)  # push file
+device.push(push)  # push file again
 device.push(StringIO(s), file_name='note.txt')  # push file (implicit object)
 device.push(StringIO(s), file_name='note.txt', type='note')  # push file as a note
 device.push(StringIO(s), file_name='note.txt', file_type='application/octet-stream')  # push file with custom parameters
@@ -70,6 +71,9 @@ chrome.push('https://github.com/kstep/pushybullet')
 
 # Deleting device
 device.delete()
+
+for contact in api.contacts():
+    contact.push("test")
 
 # Deleting test pushes
 pushes = api.pushes(since=tests_started)

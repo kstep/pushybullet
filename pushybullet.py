@@ -95,6 +95,7 @@ class Session(object):
         body = []
         for name, value in pairs:
             if hasattr(value, 'read'):
+                _body = value.read()
                 body.append(
                     'Content-Type: application/octet-stream\r\n'
                     'Content-Disposition: form-data; name="%s"; filename="%s"\r\n'
@@ -102,9 +103,9 @@ class Session(object):
                     '\r\n'
                     '%s' % (
                         urllib.quote(name),
-                        urllib.quote(value.name),
-                        os.fstat(value.fileno()).st_size,
-                        value.read()))
+                        urllib.quote(getattr(value, 'name', None) or "file.txt"),
+                        len(_body),
+                        _body))
             else:
                 body.append(
                         'Content-Type: text/plain\r\n'
@@ -372,7 +373,7 @@ class ObjectWithIden(object):
     def uri(self):
         return '%s/%s' % (self.collection_name, self.iden)
 
-class Grant(PushBulletObject, ObjectWithIden):
+class Grant(ObjectWithIden, PushBulletObject):
     collection_name = 'grants'
 
     def __repr__(self):
@@ -381,7 +382,7 @@ class Grant(PushBulletObject, ObjectWithIden):
     def __unicode__(self):
         return u'grant for %s' % (self.client['name'])
 
-class Subscription(PushBulletObject, ObjectWithIden):
+class Subscription(ObjectWithIden, PushBulletObject):
     collection_name = 'subscriptions'
 
     def __repr__(self):
@@ -407,7 +408,7 @@ class Subscription(PushBulletObject, ObjectWithIden):
 
         return self
 
-class ChannelInfo(PushBulletObject, ObjectWithIden):
+class ChannelInfo(ObjectWithIden, PushBulletObject):
     collection_name = 'channel-info'
 
     @classmethod
@@ -523,7 +524,7 @@ class Client(PushTarget, ObjectWithIden):
     def ident(self):
         return {'client_iden': self.iden}
 
-class Contact(PushTarget, ObjectWithIden):
+class Contact(ObjectWithIden, PushTarget):
     '''
     Contact to push to
     '''
@@ -559,7 +560,7 @@ class Contact(PushTarget, ObjectWithIden):
         self.name = newname
         return self.update()
 
-class Device(PushTarget, ObjectWithIden):
+class Device(ObjectWithIden, PushTarget):
     '''
     Device to push to
     '''
@@ -640,6 +641,10 @@ class User(PushTarget):
     '''
     User profile
     '''
+    def __init__(self, api, **data):
+        self.__dict__.update(data)
+        self.bind(api)
+
     @classmethod
     def load(cls, api):
         return cls(api, **api.get('users/me'))
