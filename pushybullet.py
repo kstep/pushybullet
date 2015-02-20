@@ -89,11 +89,11 @@ class Session(object):
     def delete(self, url, params=None, auth=None, headers=None):
         return self._request('DELETE', url, params=params, auth=auth, headers=headers)
 
-    def _encode_form_data(self, data):
+    def _encode_form_data(self, pairs):
         boundary = ''.join(chr(random.choice(xrange(ord('a'), ord('z')))) for _ in xrange(0, 30))
 
         body = []
-        for name, value in data.iteritems():
+        for name, value in pairs:
             if hasattr(value, 'read'):
                 body.append(
                     'Content-Type: application/octet-stream\r\n'
@@ -155,9 +155,7 @@ class Session(object):
         _headers['Host'] = _url.hostname
 
         if files:
-            _data = data.copy() if data else {}
-            _data.update(files)
-            content_type, _data = self._encode_form_data(_data)
+            content_type, _data = self._encode_form_data(p for n in (data, files) for p in n.iteritems())
 
         elif data:
             content_type, _data = ('application/x-www-form-urlencoded',
