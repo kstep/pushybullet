@@ -293,6 +293,9 @@ class PushBulletObject(object):
 
     collection_name = None
 
+    def __init__(self, **data):
+        self.__dict__.update(data)
+
     @property
     def uri(self):
         '''
@@ -677,9 +680,9 @@ class Push(PushBulletObject):
     type = None
     collection_name = 'pushes'
 
-    def __init__(self, **data):
-        self.__dict__.update(data)
-        self.decode()
+    @property
+    def uri(self):
+        return "pushes/%s" % self.iden
 
     def decode(self):
         try:
