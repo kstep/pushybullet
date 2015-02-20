@@ -98,7 +98,7 @@ class Session(object):
                 body.append(
                     'Content-Type: application/octet-stream\r\n'
                     'Content-Disposition: form-data; name="%s"; filename="%s"\r\n'
-                    'Content-Length: %s'
+                    'Content-Length: %s\r\n'
                     '\r\n'
                     '%s' % (
                         urllib.quote(name),
@@ -157,8 +157,7 @@ class Session(object):
         if files:
             _data = data.copy() if data else {}
             _data.update(files)
-            boundary = '----' + ''.join(chr(random.choice(xrange(ord('a'), ord('z')))) for _ in xrange(0, 30))
-            content_type, _data = 'multipart/form-data; boundary=%s' % boundary, self._encode_form_data(_data, boundary)
+            content_type, _data = self._encode_form_data(_data)
 
         elif data:
             content_type, _data = ('application/x-www-form-urlencoded',
