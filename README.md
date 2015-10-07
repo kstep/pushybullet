@@ -8,7 +8,7 @@ Features:
 * list devices, contacts, channels, clients, subscriptions and grants,
 * list all pushes history (in a nice generator-way),
 * watch for new push events in realtime,
-* send any kind of pushes in a number of convienient ways,
+* send any kind of pushes in a number of convenient ways,
 * delete pushes, devices, contacts, channels, clients, subscriptions and grants,
 * rename devices and contacts, dismiss pushes,
 * subscribe to channels,
